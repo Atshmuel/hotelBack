@@ -115,9 +115,9 @@ userRouter.post("/login", limiter(60, 5), async (req, res) => {
       "push"
     );
     if (!userGotTheRefreshToken) throw new Error("Failed to find the user.");
-    res.cookie("jwt", accessToken, { secure: true });
+    res.cookie("jwt", accessToken, { httpOnly: true });
     res.cookie("token", refreshToken, {
-      secure: true,
+      httpOnly: true,
       expires: new Date(Date.now() + config.THIRTY_DAYS),
     });
     res.cookie("perm", accessRole);
@@ -148,7 +148,7 @@ userRouter.get("/login", async (req, res) => {
           ? config.ROLE_NUM.EMPLOYEE
           : config.ROLE_NUM.CUSTOMER;
     const accessToken = generateAccessToken({ userId, role });
-    res.cookie("jwt", accessToken, { secure: true });
+    res.cookie("jwt", accessToken, { httpOnly: true });
     res.cookie("perm", accessRole);
 
     res.status(200).json({ message: "Logged in" });
@@ -198,7 +198,7 @@ userRouter.post("/refresh", limiter(60 * 60, 4), (req, res) => {
       role: decoded?.role,
     });
 
-    res.cookie("jwt", accessToken, { secure: true });
+    res.cookie("jwt", accessToken, { httpOnly: true });
     res.status(400).json({ accessToken });
   });
 });
