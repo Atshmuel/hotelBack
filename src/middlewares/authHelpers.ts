@@ -20,7 +20,7 @@ export function authenticateToken(
   jwt.verify(
     authHeader,
     config.SECRET_ACCESS,
-    (err: VerifyErrors | null, decoded) => {
+    (err: VerifyErrors | null, decoded: any) => {
       if (err) {
         return res
           .status(403)
