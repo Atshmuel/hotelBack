@@ -1,5 +1,5 @@
 import { Request } from "express";
-import { Document, Schema } from "mongoose";
+import { Document, ObjectId, Schema } from "mongoose";
 
 export interface Cabins extends Document {
   createdAt: string;
@@ -75,6 +75,7 @@ export interface ID {
 }
 
 export interface Users extends Document {
+  userId?: ObjectId;
   firstName: string;
   lastName: string;
   email: string;

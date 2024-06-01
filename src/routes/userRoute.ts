@@ -29,6 +29,7 @@ import {
 import jwt from "jsonwebtoken";
 import { config } from "../config/config";
 import { Users } from "../interfaces/interfaces";
+import { ObjectId } from "mongoose";
 
 export const userRouter = Router();
 
@@ -208,7 +209,7 @@ userRouter.delete(
   authSelfDelete,
   async (req, res) => {
     try {
-      const { id } = req.query;
+      const { id }: { id?: ObjectId } = req.query;
       if (!id) throw new Error("Could not find this employee id");
       const HasDeleted = await deleteUser(id);
       if (!HasDeleted)
@@ -227,6 +228,7 @@ userRouter.delete(
 userRouter.patch('/update/data', authLoggedIn, limiter(60 * 60, 10), authSelfAction, async (req, res) => {
   const userData = req.body;
   const cookie = getDataFromCookie(req, "jwt");
+  const { userId } = cookie as Users;
 
   try {
     if (userData.id) {
@@ -234,7 +236,7 @@ userRouter.patch('/update/data', authLoggedIn, limiter(60 * 60, 10), authSelfAct
       if (!updatedUser) throw Error('Could not update the user role.')
       return res.status(200).json({ message: 'User role updated successfully.' })
     }
-    const updatedUser = await updateUserData(cookie?.userId, userData)
+    const updatedUser = await updateUserData(userId, userData)
     if (!updatedUser) throw new Error('Could not update the user or updated value is not allowed.')
     res.status(200).json({ message: 'User info updated successfully.' })
   } catch (error) {
@@ -247,8 +249,10 @@ userRouter.patch('/update/data', authLoggedIn, limiter(60 * 60, 10), authSelfAct
 userRouter.patch('/update/password', async (req, res) => {
   const passwords = req.body;
   const cookie = getDataFromCookie(req, "jwt");
+  const { userId } = cookie as Users;
+
   try {
-    const updatedUser = await updateUserPassword(cookie?.userId, passwords)
+    const updatedUser = await updateUserPassword(userId, passwords)
 
     if (!updatedUser) throw new Error('Could not update the password or current password is not valid.')
     res.status(200).json({ message: 'Password updated successfully.' })

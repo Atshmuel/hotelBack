@@ -9,6 +9,7 @@ import {
 import { idSchema } from "../validators/globalValidation";
 import { newCabinValidator } from "../validators/cabinVal";
 import { authenticateToken } from "../middlewares/authHelpers";
+import { ObjectId } from "mongoose";
 export const cabinRouter = Router();
 
 cabinRouter.get("/", async (req, res) => {
@@ -26,7 +27,7 @@ cabinRouter.get("/", async (req, res) => {
 });
 
 cabinRouter.get("/byID", async (req, res) => {
-  const { id } = req.query;
+  const { id }: { id?: ObjectId } = req.query;
   const { error } = idSchema.validate(id);
   try {
     if (error) throw new Error(`${error?.message}`);
@@ -39,7 +40,7 @@ cabinRouter.get("/byID", async (req, res) => {
 });
 
 cabinRouter.delete("/", authenticateToken, async (req, res) => {
-  const { id } = req.query;
+  const { id }: { id?: ObjectId } = req.query;
   const { error } = idSchema.validate(id);
 
   try {
@@ -69,7 +70,8 @@ cabinRouter.post("/", authenticateToken, async (req, res) => {
 });
 
 cabinRouter.patch("/", authenticateToken, async (req, res) => {
-  const { id } = req.query;
+  const { id }: { id?: ObjectId } = req.query;
+
   const newData = req.body;
   const { error } = idSchema.validate(id);
 

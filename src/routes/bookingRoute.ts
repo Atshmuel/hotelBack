@@ -45,8 +45,8 @@ bookingRouter.get("/all", async (req, res) => {
       cabins,
       guests,
       totalBookings,
-    }: { bookings?: object[]; totalBookings?: number } =
-      (await getAllBookings(filter, field, direction, page)) || [];
+    }: { bookings?: object[]; cabins?: object[]; guests?: object[]; totalBookings?: number } =
+      (await getAllBookings(filter, field, direction, page)) || {};
 
     res.status(200).json({ bookings, cabins, guests, totalBookings });
   } catch (error: any) {

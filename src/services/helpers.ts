@@ -26,10 +26,11 @@ export function getDataFromCookie(req: Request, cookieName: string) {
 }
 
 export function tokenHasExp(req: Request, cookieName: string) {
-  const cookieData = getDataFromCookie(req, cookieName);
+  const cookieData = getDataFromCookie(req, cookieName)
   if (!cookieData) return false;
+  if (typeof cookieData === 'string' || !('exp' in cookieData)) return false;
 
-  const expiredAt = new Date(cookieData?.exp * 1000);
+  const expiredAt = new Date(cookieData.exp * 1000);
 
   if (expiredAt < new Date()) return true;
   return false;

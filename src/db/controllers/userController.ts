@@ -43,11 +43,8 @@ export const getUser = async (email: string) => {
   const user = await userModel.findOne({ email: email.toLowerCase() });
   return user;
 };
-export const getUserData = async (id: string) => {
-  const userData = await userModel.findById(
-    id,
-    "-_id -password -refreshToken -createdAt -__v"
-  );
+export const getUserData = async (id: ObjectId) => {
+  const userData = await userModel.findById(id);
 
   if (!userData) return;
 

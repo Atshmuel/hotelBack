@@ -1,10 +1,12 @@
 import { Router } from "express";
 import { idSchema } from "../validators/globalValidation";
 import { getGuest } from "../db/controllers/guestController";
+import { ObjectId } from "mongoose";
 export const guestRouter = Router();
 
 guestRouter.get("/", async (req, res) => {
-  const { id } = req.query;
+  const { id }: { id?: ObjectId } = req.query;
+
   const { error } = idSchema.validate(id);
   try {
     if (error) throw new Error(`${error?.message}`);

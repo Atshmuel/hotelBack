@@ -1,6 +1,7 @@
 import { getTime } from "../../services/helpers";
 import { Cabins, CabinUpdateData, ID } from "../../interfaces/interfaces";
 import { cabinModel } from "../models/models";
+import { ObjectId } from "mongoose";
 
 export const getCabins = async () => {
   const cabinsArr = await cabinModel.find();
@@ -8,7 +9,7 @@ export const getCabins = async () => {
   const message = hasFound ? "Found cabins data" : "Failed to find cabins data";
   return { hasFound, message, cabinsArr };
 };
-export const getCabin = async (id: ID) => {
+export const getCabin = async (id: ObjectId) => {
   return await cabinModel.findById(id);
 };
 
@@ -33,12 +34,12 @@ export const createCabin = async (newCabin: Cabins) => {
   return { hasCreated, message };
 };
 
-export const deleteCabin = async (id: ID) => {
+export const deleteCabin = async (id: ObjectId) => {
   const deletedCabinData = await cabinModel.findByIdAndDelete(id);
   return deletedCabinData === null ? false : true;
 };
 
-export const editCabinData = async (id: ID, newCabinData: Cabins) => {
+export const editCabinData = async (id: ObjectId, newCabinData: Cabins) => {
   let hasUpdated = true;
   let message;
   const oldCabinData = await cabinModel.findById(id);
