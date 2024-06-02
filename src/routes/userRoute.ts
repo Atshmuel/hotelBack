@@ -1,4 +1,4 @@
-import { Request, Router } from "express";
+import { CookieOptions, Request, Router } from "express";
 import {
   checkUserTokens,
   createUser,
@@ -32,6 +32,14 @@ import { Users } from "../interfaces/interfaces";
 import { ObjectId } from "mongoose";
 
 export const userRouter = Router();
+
+const cookieOptions: CookieOptions = {
+  httpOnly: true,
+  secure: process.env.PRODUCTION === 'production',
+  sameSite: process.env.PRODUCTION === 'production' ? 'lax' : 'none',
+  domain: process.env.PRODUCTION === 'production' ? 'management-wildhotel.onrender.com' : undefined,
+  path: '/',
+}
 
 userRouter.get("/all", async (req, res) => {
   try {
@@ -116,7 +124,7 @@ userRouter.post("/login", limiter(60, 5), async (req, res) => {
       "push"
     );
     if (!userGotTheRefreshToken) throw new Error("Failed to find the user.");
-    res.cookie("jwt", accessToken, { httpOnly: true });
+    res.cookie("jwt", accessToken, cookieOptions);
     res.cookie("token", refreshToken, {
       httpOnly: true,
       expires: new Date(Date.now() + config.THIRTY_DAYS),
@@ -150,7 +158,7 @@ userRouter.get("/login", async (req, res) => {
           ? config.ROLE_NUM.EMPLOYEE
           : config.ROLE_NUM.CUSTOMER;
     const accessToken = generateAccessToken({ userId, role });
-    res.cookie("jwt", accessToken, { httpOnly: true });
+    res.cookie("jwt", accessToken, cookieOptions);
     res.cookie("perm", accessRole);
 
     res.status(200).json({ message: "Logged in" });
@@ -200,7 +208,7 @@ userRouter.post("/refresh", limiter(60 * 60, 4), (req, res) => {
       role: decoded?.role,
     });
 
-    res.cookie("jwt", accessToken, { httpOnly: true });
+    res.cookie("jwt", accessToken, cookieOptions);
     res.status(400).json({ accessToken });
   });
 });
