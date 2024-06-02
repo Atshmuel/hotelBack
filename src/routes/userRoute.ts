@@ -125,10 +125,10 @@ userRouter.post("/login", limiter(60, 5), async (req, res) => {
     );
     if (!userGotTheRefreshToken) throw new Error("Failed to find the user.");
     res.cookie("jwt", accessToken, cookieOptions);
-    res.cookie("token", refreshToken, {
-      httpOnly: true,
-      expires: new Date(Date.now() + config.THIRTY_DAYS),
-    });
+    res.cookie("token", refreshToken,
+      {
+        ...cookieOptions, expires: new Date(Date.now() + config.THIRTY_DAYS),
+      });
     res.cookie("perm", accessRole);
 
     res.status(200).json({ message: "Logged in" });
