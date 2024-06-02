@@ -36,9 +36,7 @@ export const userRouter = Router();
 const cookieOptions: CookieOptions = {
   httpOnly: true,
   secure: process.env.PRODUCTION === 'production',
-  sameSite: process.env.PRODUCTION === 'production' ? 'lax' : 'none',
-  domain: process.env.PRODUCTION === 'production' ? 'management-wildhotel.onrender.com' : undefined,
-  path: '/',
+  sameSite: process.env.PRODUCTION === 'production' ? 'none' : "lax"
 }
 
 userRouter.get("/all", async (req, res) => {
