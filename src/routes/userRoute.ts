@@ -44,6 +44,7 @@ userRouter.get("/all", async (req, res) => {
   }
 });
 
+
 userRouter.post(
   "/signup",
   authRole([config.ROLE.ADMIN, config.ROLE.EMPLOYEE]),
@@ -131,6 +132,7 @@ userRouter.post("/login", limiter(60, 5), async (req, res) => {
 userRouter.get("/login", async (req, res) => {
   try {
     const refreshToken = req.cookies["token"];
+    console.log(refreshToken);
     if (!refreshToken) throw new Error("No token found.");
 
     if (tokenHasExp(req, "token")) throw new Error("Token has expierd");

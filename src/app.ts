@@ -14,7 +14,7 @@ const { PORT, DB } = config;
 const app = express();
 app.use(
   cors({
-    origin: "https://management-wildhotel.onrender.com",
+    origin: ["https://management-wildhotel.onrender.com", 'http://localhost:5173'],
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
   })
