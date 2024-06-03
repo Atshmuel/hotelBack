@@ -53,7 +53,7 @@ userRouter.get("/all", async (req, res) => {
 
 userRouter.post(
   "/signup",
-  authRole([config.ROLE.ADMIN, config.ROLE.EMPLOYEE]), limiter(99999999, 0),
+  authRole([config.ROLE.OWNER]),
   async (req, res) => {
     let {
       email,

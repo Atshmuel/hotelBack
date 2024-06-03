@@ -8,7 +8,7 @@ export const config = {
   ACCESS_EXPIRE_TIME: "15m",
   THIRTY_DAYS: 30 * 24 * 60 * 60 * 1000,
   PAGE_SIZE: 10,
-  ROLE: { ADMIN: "admin", EMPLOYEE: "employee", customer: "customer" },
+  ROLE: { ADMIN: "admin", EMPLOYEE: "employee", CUSTOMER: "customer", OWNER: 'owner' },
   ROLE_NUM: {
     ADMIN: process.env.ADMIN || "aebf43b5d72dace9990b3",
     EMPLOYEE: process.env.EMPLOYEE || "e8da0c1a1d0bce96e38c4",
