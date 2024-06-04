@@ -22,7 +22,7 @@ settingsRoute.get("/", async (req, res) => {
   }
 });
 
-settingsRoute.patch("/", authRole([config.ROLE.ADMIN]), async (req, res) => {
+settingsRoute.patch("/", authRole([config.ROLE.OWNER]), async (req, res) => {
   const setting: object = req.body;
   try {
     const { updated, message }: { updated: boolean; message: string } =

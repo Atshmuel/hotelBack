@@ -53,7 +53,7 @@ userRouter.get("/all", async (req, res) => {
 
 userRouter.post(
   "/signup",
-  authRole([config.ROLE.OWNER]),
+  authRole([config.ROLE.ADMIN]), limiter(60, 1),
   async (req, res) => {
     let {
       email,
@@ -212,7 +212,7 @@ userRouter.post("/refresh", limiter(60 * 60, 4), (req, res) => {
 
 userRouter.delete(
   "/delete",
-  authRole([config.ROLE.ADMIN]),
+  authRole([config.ROLE.OWNER]),
   authSelfDelete,
   async (req, res) => {
     try {
@@ -232,7 +232,7 @@ userRouter.delete(
   }
 );
 
-userRouter.patch('/update/data', authLoggedIn, limiter(60 * 60, 10), authSelfAction, async (req, res) => {
+userRouter.patch('/update/data', authRole([config.ROLE.OWNER]), authLoggedIn, limiter(60 * 60, 10), authSelfAction, async (req, res) => {
   const userData = req.body;
   const cookie = getDataFromCookie(req, "jwt");
   const { userId } = cookie as Users;
@@ -253,7 +253,7 @@ userRouter.patch('/update/data', authLoggedIn, limiter(60 * 60, 10), authSelfAct
 })
 
 
-userRouter.patch('/update/password', async (req, res) => {
+userRouter.patch('/update/password', authRole([config.ROLE.OWNER]), async (req, res) => {
   const passwords = req.body;
   const cookie = getDataFromCookie(req, "jwt");
   const { userId } = cookie as Users;

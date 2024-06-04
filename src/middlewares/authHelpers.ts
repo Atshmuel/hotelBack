@@ -34,6 +34,7 @@ export function authenticateToken(
 
 export function authRole(roleName: string[]) {
   return function (req: CustomRequest, res: Response, next: NextFunction) {
+
     const authHeader = getDataFromCookie(req, `jwt`);
 
     if (!authHeader) {
@@ -45,7 +46,7 @@ export function authRole(roleName: string[]) {
 
     if (!roleName.includes(role))
       return res.status(403).json({
-        message: `Access forbidden, your permission are not allowed to use this function`,
+        message: `Access forbidden, your permission are not allowed to use this feature`,
       });
 
     next();

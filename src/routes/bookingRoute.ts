@@ -11,9 +11,10 @@ import {
 import { ObjectId } from "mongoose";
 import { authenticateToken, authRole } from "../middlewares/authHelpers";
 import { config } from "../config/config";
+import { limiter } from "../services/helpers";
 export const bookingRouter = Router();
 
-bookingRouter.post("/new", async (req, res) => {
+bookingRouter.post("/new", limiter(60, 1), authRole([config.ROLE.ADMIN]), async (req, res) => {
   const data = req.body;
   const { error } = newBookingValidator.validate(data);
   try {
@@ -65,7 +66,7 @@ bookingRouter.get("/", async (req, res) => {
   }
 });
 
-bookingRouter.patch("/", authenticateToken, async (req, res) => {
+bookingRouter.patch("/", authRole([config.ROLE.ADMIN]), limiter(60, 1), authenticateToken, async (req, res) => {
   const { bookingId }: { bookingId?: ObjectId } = req.query;
   const newData = req.body;
   try {
@@ -83,7 +84,7 @@ bookingRouter.patch("/", authenticateToken, async (req, res) => {
 bookingRouter.delete(
   "/",
   authenticateToken,
-  authRole([config.ROLE.ADMIN]),
+  authRole([config.ROLE.OWNER]),
   async (req, res) => {
     const { bookingId }: { bookingId?: ObjectId } = req.query;
     try {

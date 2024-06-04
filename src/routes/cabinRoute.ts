@@ -8,8 +8,10 @@ import {
 } from "../db/controllers/cabinController";
 import { idSchema } from "../validators/globalValidation";
 import { newCabinValidator } from "../validators/cabinVal";
-import { authenticateToken } from "../middlewares/authHelpers";
+import { authRole, authenticateToken } from "../middlewares/authHelpers";
 import { ObjectId } from "mongoose";
+import { config } from "../config/config";
+import { limiter } from "../services/helpers";
 export const cabinRouter = Router();
 
 cabinRouter.get("/", async (req, res) => {
@@ -39,7 +41,7 @@ cabinRouter.get("/byID", async (req, res) => {
   }
 });
 
-cabinRouter.delete("/", authenticateToken, async (req, res) => {
+cabinRouter.delete("/", authRole([config.ROLE.ADMIN]), authenticateToken, async (req, res) => {
   const { id }: { id?: ObjectId } = req.query;
   const { error } = idSchema.validate(id);
 
@@ -56,7 +58,7 @@ cabinRouter.delete("/", authenticateToken, async (req, res) => {
   }
 });
 
-cabinRouter.post("/", authenticateToken, async (req, res) => {
+cabinRouter.post("/", authRole([config.ROLE.ADMIN]), authenticateToken, limiter(60, 1), async (req, res) => {
   const newCabin = req.body;
   const { error } = newCabinValidator.validate(newCabin);
   try {
@@ -69,7 +71,7 @@ cabinRouter.post("/", authenticateToken, async (req, res) => {
   }
 });
 
-cabinRouter.patch("/", authenticateToken, async (req, res) => {
+cabinRouter.patch("/", authRole([config.ROLE.OWNER]), authenticateToken, async (req, res) => {
   const { id }: { id?: ObjectId } = req.query;
 
   const newData = req.body;
