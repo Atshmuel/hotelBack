@@ -30,6 +30,8 @@ import jwt from "jsonwebtoken";
 import { config } from "../config/config";
 import { Users } from "../interfaces/interfaces";
 import { ObjectId } from "mongoose";
+import { loginInfo, newUserValidation, updateUserInfo, updateUserPasswordValidation, updateUserRoleValidator } from "../validators/usersVal";
+import { idSchema } from "../validators/globalValidation";
 
 export const userRouter = Router();
 
@@ -53,8 +55,12 @@ userRouter.get("/all", async (req, res) => {
 
 userRouter.post(
   "/signup",
-  authRole([config.ROLE.ADMIN]), limiter(60, 1),
+  authRole([config.ROLE.OWNER, config.ROLE.ADMIN]), limiter(6000, 2),
   async (req, res) => {
+    const { error } = newUserValidation.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.message });
+    }
     let {
       email,
       firstName,
@@ -67,7 +73,6 @@ userRouter.post(
       email: string;
       firstName: string;
       lastName: string;
-      userLastName: string;
       phone: string;
       password: string;
       userRole: string;
@@ -92,20 +97,24 @@ userRouter.post(
       if (!hasCreated) throw new Error("User already exist.");
       res.status(200).json(hasCreated && "User has created successfully");
     } catch (error) {
-      res.status(400).json(error?.message);
+      res.status(400).json({ message: error?.message });
     }
   }
 );
 
 userRouter.post("/login", limiter(60, 5), async (req, res) => {
-  const { email, password }: { email: string; password: string } = req.body;
+  const { error } = loginInfo.validate(req.body);
+  if (error) {
+    return res.status(400).json({ message: error.message });
+  }
 
+  const { email, password }: { email: string; password: string } = req.body;
   try {
     const user = await getUser(email.toLowerCase());
-
     if (!user) throw new Error("User dose not exist!");
     const isValidPassword = await bcrypt.compare(password, user?.password);
-    if (!isValidPassword) throw new Error("Email or password is wrong.");
+    if (!isValidPassword)
+      throw new Error(`Email or password is wrong.`);
 
     const { _id: userId, role } = user;
     const accessRole =
@@ -167,7 +176,6 @@ userRouter.get("/login", async (req, res) => {
 userRouter.get(
   "/userInfo",
   authLoggedIn,
-  limiter(60 * 60, 800),
   async (req, res) => {
     const info = getDataFromCookie(req, "jwt") as Users;
     const { userId } = info;
@@ -212,11 +220,15 @@ userRouter.post("/refresh", limiter(60 * 60, 4), (req, res) => {
 
 userRouter.delete(
   "/delete",
-  authRole([config.ROLE.OWNER]),
+  authRole([config.ROLE.OWNER, config.ROLE.ADMIN]),
   authSelfDelete,
   async (req, res) => {
     try {
       const { id }: { id?: ObjectId } = req.query;
+      const { error } = idSchema.validate(id);
+      if (error) {
+        return res.status(400).json({ message: error.message });
+      }
       if (!id) throw new Error("Could not find this employee id");
       const HasDeleted = await deleteUser(id);
       if (!HasDeleted)
@@ -232,11 +244,14 @@ userRouter.delete(
   }
 );
 
-userRouter.patch('/update/data', authRole([config.ROLE.OWNER]), authLoggedIn, limiter(60 * 60, 10), authSelfAction, async (req, res) => {
+userRouter.patch('/update/data', authRole([config.ROLE.OWNER, config.ROLE.ADMIN]), authLoggedIn, limiter(60, 5), authSelfAction, async (req, res) => {
+  const { error } = updateUserRoleValidator.validate(req.body);
+  if (error) {
+    return res.status(400).json({ message: error.message });
+  }
   const userData = req.body;
   const cookie = getDataFromCookie(req, "jwt");
   const { userId } = cookie as Users;
-
   try {
     if (userData.id) {
       const updatedUser = await updateUserRole(userData)
@@ -253,18 +268,20 @@ userRouter.patch('/update/data', authRole([config.ROLE.OWNER]), authLoggedIn, li
 })
 
 
-userRouter.patch('/update/password', authRole([config.ROLE.OWNER]), async (req, res) => {
+userRouter.patch('/update/password', authRole([config.ROLE.OWNER]), limiter(60, 2), async (req, res) => {
+  const { error } = updateUserPasswordValidation.validate(req.body);
+  if (error) {
+    return res.status(400).json({ message: error.message });
+  }
   const passwords = req.body;
   const cookie = getDataFromCookie(req, "jwt");
   const { userId } = cookie as Users;
-
   try {
     const updatedUser = await updateUserPassword(userId, passwords)
 
     if (!updatedUser) throw new Error('Could not update the password or current password is not valid.')
     res.status(200).json({ message: 'Password updated successfully.' })
   } catch (error) {
-
     res.status(400).json({ message: error?.message })
   }
 })

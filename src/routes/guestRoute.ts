@@ -6,10 +6,11 @@ export const guestRouter = Router();
 
 guestRouter.get("/", async (req, res) => {
   const { id }: { id?: ObjectId } = req.query;
-
   const { error } = idSchema.validate(id);
+  if (error) {
+    return res.status(400).json({ message: error.message });
+  }
   try {
-    if (error) throw new Error(`${error?.message}`);
     const guestData = await getGuest(id);
     if (!guestData) throw new Error(`Failed to find this guest ID (${id})`);
     res.status(200).json(guestData);

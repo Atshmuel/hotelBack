@@ -79,7 +79,7 @@ export const checkUserTokens = async (userId: ObjectId, token: string) => {
 };
 
 export const getAllUsers = async () => {
-  const allUsers = await userModel.find().sort({ role: 1 });
+  const allUsers = (await userModel.find().sort({ role: 1 })).filter((user) => user.role !== 'owner')
   if (!allUsers) throw new Error("Could not find users.");
   return allUsers;
 };
@@ -103,7 +103,6 @@ export const updateUserPassword = async (
   passwords: { newPassword: string; oldPassword: string }
 ) => {
   const user = await userModel.findById(id);
-
   if (!user) return false;
   const isValidPassword = await bcrypt.compare(
     passwords.oldPassword,

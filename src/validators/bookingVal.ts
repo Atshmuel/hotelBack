@@ -22,3 +22,16 @@ export const newBookingValidator = Joi.object({
   cabinID: cabinIdSchema.required(),
   guestID: guestIdSchema.required(),
 });
+export const bookingUpdateValidator = Joi.object({
+  extrasPrice: Joi.number().positive().optional(),
+  totalPrice: Joi.number().positive().optional(),
+  hasBreakfast: Joi.boolean().optional(),
+  isPaid: Joi.boolean().required(),
+  status: Joi.string().required(),
+});
+
+
+export const bookingFromDateValitaor = Joi.object({
+  last: Joi.string().required(),
+  fields: Joi.string().required(),
+});

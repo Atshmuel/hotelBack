@@ -21,7 +21,7 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
-app.set('trust proxy', true);
+app.set('trust proxy', false);
 app.use("/bookings", bookingRouter);
 app.use("/cabins", cabinRouter);
 app.use("/guests", guestRouter);

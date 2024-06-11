@@ -40,7 +40,7 @@ export function limiter(timeInSec: number, trys: number) {
   return rateLimit({
     windowMs: timeInSec * 1000,
     max: trys,
-    message: { message: "To many request, try again in 60 sec" },
+    message: { message: `To many request, try again in ${timeInSec} sec` },
     standardHeaders: true,
     legacyHeaders: false,
   });

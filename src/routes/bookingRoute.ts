@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { newBookingValidator } from "../validators/bookingVal";
+import { bookingFromDateValitaor, bookingUpdateValidator, newBookingValidator } from "../validators/bookingVal";
 import {
   createNewBooking,
   deleteBooking,
@@ -12,6 +12,7 @@ import { ObjectId } from "mongoose";
 import { authenticateToken, authRole } from "../middlewares/authHelpers";
 import { config } from "../config/config";
 import { limiter } from "../services/helpers";
+import { idSchema } from "../validators/globalValidation";
 export const bookingRouter = Router();
 
 bookingRouter.post("/new", limiter(60, 1), authRole([config.ROLE.ADMIN]), async (req, res) => {
@@ -57,6 +58,10 @@ bookingRouter.get("/all", async (req, res) => {
 
 bookingRouter.get("/", async (req, res) => {
   const { bookingId }: { bookingId?: ObjectId } = req.query;
+  const { error } = idSchema.validate(bookingId);
+  if (error) {
+    return res.status(400).json({ message: error.message });
+  }
   try {
     const { booking, guest, cabin } = await getBookingById(bookingId);
     if (!booking) throw new Error("Could not find this booking id.");
@@ -66,17 +71,20 @@ bookingRouter.get("/", async (req, res) => {
   }
 });
 
-bookingRouter.patch("/", authRole([config.ROLE.ADMIN]), limiter(60, 1), authenticateToken, async (req, res) => {
+bookingRouter.patch("/", authRole([config.ROLE.OWNER]), limiter(60, 10), authenticateToken, async (req, res) => {
   const { bookingId }: { bookingId?: ObjectId } = req.query;
   const newData = req.body;
+  const { error: idError } = idSchema.validate(bookingId);
+  const { error: dataError } = bookingUpdateValidator.validate(newData);
+  if (idError || dataError) {
+    return res.status(400).json({ message: idError?.message || dataError?.message });
+  }
   try {
     const hasUpdated = await updateBooking(bookingId, newData);
     if (!hasUpdated)
       throw new Error("Cloud not update this booking, Please try again later.");
     res.status(200).json(bookingId);
   } catch (error) {
-    console.log(error);
-
     res.status(400).json(error.message);
   }
 });
@@ -84,9 +92,13 @@ bookingRouter.patch("/", authRole([config.ROLE.ADMIN]), limiter(60, 1), authenti
 bookingRouter.delete(
   "/",
   authenticateToken,
-  authRole([config.ROLE.OWNER]),
+  authRole([config.ROLE.OWNER]), limiter(60 * 2, 2),
   async (req, res) => {
     const { bookingId }: { bookingId?: ObjectId } = req.query;
+    const { error } = idSchema.validate(bookingId);
+    if (error) {
+      return res.status(400).json({ message: error.message });
+    }
     try {
       const { hasDeleted, error } = await deleteBooking(bookingId);
       if (!hasDeleted || error) throw new Error(error);
@@ -98,8 +110,11 @@ bookingRouter.delete(
 );
 
 bookingRouter.get("/from", async (req, res) => {
+  const { error } = bookingFromDateValitaor.validate(req.query);
+  if (error) {
+    return res.status(400).json({ message: error.message });
+  }
   const { last, fields }: { last?: string; fields?: string } = req.query;
-
   try {
     if (!last || !fields) throw new Error("Failed to get the days limit.");
     const bookings = await getBookingsFromDate(Number(last), fields);
