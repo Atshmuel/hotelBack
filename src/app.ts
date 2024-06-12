@@ -1,7 +1,6 @@
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
-import path from "path";
 import { config } from "./config/config";
 import { bookingRouter } from "./routes/bookingRoute";
 import { cabinRouter } from "./routes/cabinRoute";
@@ -12,23 +11,18 @@ import { userRouter } from "./routes/userRoute";
 import cookieParser from "cookie-parser";
 
 const { PORT, DB } = config;
+
 const app = express();
 app.use(
   cors({
-    origin: ["https://wildhotel-management.netlify.app", 'http://localhost:5173'],
+    origin: ["https://management-wildhotel.onrender.com", 'http://localhost:5173'],
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
   })
 );
-app.use(express.static(path.join(__dirname, 'client/build')))
 app.use(express.json());
 app.use(cookieParser());
 app.set('trust proxy', false);
-
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
-});
-
 app.use("/bookings", bookingRouter);
 app.use("/cabins", cabinRouter);
 app.use("/guests", guestRouter);
