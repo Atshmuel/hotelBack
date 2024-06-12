@@ -1,6 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
+import path from "path";
 import { config } from "./config/config";
 import { bookingRouter } from "./routes/bookingRoute";
 import { cabinRouter } from "./routes/cabinRoute";
@@ -19,9 +20,15 @@ app.use(
     credentials: true,
   })
 );
+app.use(express.static(path.join(__dirname, 'client/build')))
 app.use(express.json());
 app.use(cookieParser());
 app.set('trust proxy', false);
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
+
 app.use("/bookings", bookingRouter);
 app.use("/cabins", cabinRouter);
 app.use("/guests", guestRouter);
