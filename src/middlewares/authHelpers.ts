@@ -9,7 +9,9 @@ export function authenticateToken(
   res: Response,
   next: NextFunction
 ) {
+
   const authHeader = req.cookies["jwt"];
+  console.log('again');
 
   if (!authHeader) {
     return res

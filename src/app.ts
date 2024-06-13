@@ -9,6 +9,7 @@ import { settingsRoute } from "./routes/settingsRoute";
 import { userRouter } from "./routes/userRoute";
 
 import cookieParser from "cookie-parser";
+import { authLoggedIn } from "./middlewares/authHelpers";
 
 const { PORT, DB } = config;
 
@@ -23,10 +24,10 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 app.set('trust proxy', false);
-app.use("/bookings", bookingRouter);
-app.use("/cabins", cabinRouter);
-app.use("/guests", guestRouter);
-app.use("/settings", settingsRoute);
+app.use("/bookings", authLoggedIn, bookingRouter);
+app.use("/cabins", authLoggedIn, cabinRouter);
+app.use("/guests", authLoggedIn, guestRouter);
+app.use("/settings", authLoggedIn, settingsRoute);
 app.use("/users", userRouter);
 
 const main = async () => {

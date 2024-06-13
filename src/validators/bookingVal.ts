@@ -26,7 +26,7 @@ export const bookingUpdateValidator = Joi.object({
   extrasPrice: Joi.number().positive().optional(),
   totalPrice: Joi.number().positive().optional(),
   hasBreakfast: Joi.boolean().optional(),
-  isPaid: Joi.boolean().required(),
+  isPaid: Joi.boolean().optional(),
   status: Joi.string().required(),
 });
 

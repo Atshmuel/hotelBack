@@ -17,6 +17,7 @@ import {
   authRole,
   authSelfAction,
   authSelfDelete,
+  authenticateToken,
 } from "../middlewares/authHelpers";
 import {
   generateAccessToken,
@@ -30,7 +31,7 @@ import jwt from "jsonwebtoken";
 import { config } from "../config/config";
 import { Users } from "../interfaces/interfaces";
 import { ObjectId } from "mongoose";
-import { loginInfo, newUserValidation, updateUserInfo, updateUserPasswordValidation, updateUserRoleValidator } from "../validators/usersVal";
+import { loginInfo, newUserValidation, updateUserPasswordValidation, updateUserRoleValidator } from "../validators/usersVal";
 import { idSchema } from "../validators/globalValidation";
 
 export const userRouter = Router();
@@ -41,7 +42,7 @@ const cookieOptions: CookieOptions = {
   sameSite: process.env.PRODUCTION === 'production' ? 'none' : "lax"
 }
 
-userRouter.get("/all", async (req, res) => {
+userRouter.get("/all", authenticateToken, authRole([config.ROLE.ADMIN, config.ROLE.EMPLOYEE, config.ROLE.OWNER]), async (req, res) => {
   try {
     const foundUsers = await getAllUsers();
     if (!foundUsers.length) throw new Error("Could not find users.");
@@ -54,7 +55,7 @@ userRouter.get("/all", async (req, res) => {
 
 
 userRouter.post(
-  "/signup",
+  "/signup", authenticateToken,
   authRole([config.ROLE.OWNER, config.ROLE.ADMIN]), limiter(6000, 2),
   async (req, res) => {
     const { error } = newUserValidation.validate(req.body);
@@ -175,7 +176,6 @@ userRouter.get("/login", async (req, res) => {
 
 userRouter.get(
   "/userInfo",
-  authLoggedIn,
   async (req, res) => {
     const info = getDataFromCookie(req, "jwt") as Users;
     const { userId } = info;
@@ -202,7 +202,7 @@ userRouter.get("/logout", authLoggedIn, async (req, res) => {
     return res.status(200).json({ message: "Logged out Successfully, Bye." });
   return res.status(400).json({ message: "Logout failed" });
 });
-userRouter.post("/refresh", limiter(60 * 60, 4), (req, res) => {
+userRouter.post("/refresh", authenticateToken, limiter(60 * 60, 4), (req, res) => {
   const refreshToken = req.cookies["token"];
   if (!refreshToken) return res.sendStatus(401);
 
@@ -220,6 +220,7 @@ userRouter.post("/refresh", limiter(60 * 60, 4), (req, res) => {
 
 userRouter.delete(
   "/delete",
+  authenticateToken,
   authRole([config.ROLE.OWNER, config.ROLE.ADMIN]),
   authSelfDelete,
   async (req, res) => {
@@ -244,7 +245,7 @@ userRouter.delete(
   }
 );
 
-userRouter.patch('/update/data', authRole([config.ROLE.OWNER, config.ROLE.ADMIN]), authLoggedIn, limiter(60, 5), authSelfAction, async (req, res) => {
+userRouter.patch('/update/data', authenticateToken, authRole([config.ROLE.OWNER, config.ROLE.ADMIN, config.ROLE.EMPLOYEE]), authLoggedIn, limiter(60, 5), authSelfAction, async (req, res) => {
   const { error } = updateUserRoleValidator.validate(req.body);
   if (error) {
     return res.status(400).json({ message: error.message });
@@ -268,7 +269,7 @@ userRouter.patch('/update/data', authRole([config.ROLE.OWNER, config.ROLE.ADMIN]
 })
 
 
-userRouter.patch('/update/password', authRole([config.ROLE.OWNER]), limiter(60, 2), async (req, res) => {
+userRouter.patch('/update/password', authenticateToken, authRole([config.ROLE.OWNER]), limiter(60, 2), async (req, res) => {
   const { error } = updateUserPasswordValidation.validate(req.body);
   if (error) {
     return res.status(400).json({ message: error.message });

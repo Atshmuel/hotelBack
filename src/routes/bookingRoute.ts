@@ -9,13 +9,13 @@ import {
   updateBooking,
 } from "../db/controllers/bookingController";
 import { ObjectId } from "mongoose";
-import { authenticateToken, authRole } from "../middlewares/authHelpers";
+import { authRole } from "../middlewares/authHelpers";
 import { config } from "../config/config";
 import { limiter } from "../services/helpers";
 import { idSchema } from "../validators/globalValidation";
 export const bookingRouter = Router();
 
-bookingRouter.post("/new", limiter(60, 1), authRole([config.ROLE.ADMIN]), async (req, res) => {
+bookingRouter.post("/new", limiter(60, 1), authRole([config.ROLE.OWNER, config.ROLE.ADMIN]), async (req, res) => {
   const data = req.body;
   const { error } = newBookingValidator.validate(data);
   try {
@@ -71,7 +71,7 @@ bookingRouter.get("/", async (req, res) => {
   }
 });
 
-bookingRouter.patch("/", authRole([config.ROLE.OWNER]), limiter(60, 10), authenticateToken, async (req, res) => {
+bookingRouter.patch("/", authRole([config.ROLE.OWNER, config.ROLE.ADMIN, config.ROLE.EMPLOYEE]), limiter(60, 10), async (req, res) => {
   const { bookingId }: { bookingId?: ObjectId } = req.query;
   const newData = req.body;
   const { error: idError } = idSchema.validate(bookingId);
@@ -91,9 +91,10 @@ bookingRouter.patch("/", authRole([config.ROLE.OWNER]), limiter(60, 10), authent
 
 bookingRouter.delete(
   "/",
-  authenticateToken,
+
   authRole([config.ROLE.OWNER]), limiter(60 * 2, 2),
   async (req, res) => {
+
     const { bookingId }: { bookingId?: ObjectId } = req.query;
     const { error } = idSchema.validate(bookingId);
     if (error) {
