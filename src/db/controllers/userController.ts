@@ -91,9 +91,9 @@ export const deleteUser = async (id: ObjectId) => {
 };
 
 export const updateUserData = async (id: ObjectId, data: Users) => {
-  const { firstName, lastName, phone, userAvatar } = data;
-
+  const { firstName, lastName, phone } = data;
   if (!firstName || !lastName || !phone) return false;
+  if (await userModel.findOne({ phone: phone })) return false;
   const userUpdated = await userModel.findByIdAndUpdate(id, data);
   return userUpdated ? true : false;
 };

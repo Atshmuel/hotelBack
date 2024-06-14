@@ -27,7 +27,7 @@ export const updateUserInfo = Joi.object({
   firstName: Joi.string().min(2).required(),
   lastName: Joi.string().min(2).required(),
   phone: Joi.string().length(10).required(),
-  userAvatar: Joi.string(),
+  userAvatar: Joi.string().min(0).optional(),
 });
 
 export const loginInfo = Joi.object({

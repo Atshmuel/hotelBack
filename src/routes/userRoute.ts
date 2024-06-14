@@ -31,7 +31,7 @@ import jwt from "jsonwebtoken";
 import { config } from "../config/config";
 import { Users } from "../interfaces/interfaces";
 import { ObjectId } from "mongoose";
-import { loginInfo, newUserValidation, updateUserPasswordValidation, updateUserRoleValidator } from "../validators/usersVal";
+import { loginInfo, newUserValidation, updateUserInfo, updateUserPasswordValidation, updateUserRoleValidator } from "../validators/usersVal";
 import { idSchema } from "../validators/globalValidation";
 
 export const userRouter = Router();
@@ -246,7 +246,7 @@ userRouter.delete(
 );
 
 userRouter.patch('/update/data', authenticateToken, authRole([config.ROLE.OWNER, config.ROLE.ADMIN, config.ROLE.EMPLOYEE]), authLoggedIn, limiter(60, 5), authSelfAction, async (req, res) => {
-  const { error } = updateUserRoleValidator.validate(req.body);
+  const { error } = req.body.firstName ? updateUserInfo.validate(req.body) : updateUserRoleValidator.validate(req.body);
   if (error) {
     return res.status(400).json({ message: error.message });
   }
