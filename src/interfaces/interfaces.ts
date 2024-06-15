@@ -94,4 +94,14 @@ export interface Roles {
 
 export interface CustomRequest extends Request {
   user?: Users;
+  req: Request;
+}
+
+export interface newCabinInt extends Document {
+  name: string;
+  maxCapacity: number;
+  regularPrice: number;
+  discount: number;
+  description: string;
+  imgUrl: string;
 }

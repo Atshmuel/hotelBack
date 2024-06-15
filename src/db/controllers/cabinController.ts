@@ -1,5 +1,10 @@
 import { getTime } from "../../services/helpers";
-import { Cabins, CabinUpdateData, ID } from "../../interfaces/interfaces";
+import {
+  Cabins,
+  CabinUpdateData,
+  ID,
+  newCabinInt,
+} from "../../interfaces/interfaces";
 import { cabinModel } from "../models/models";
 import { ObjectId } from "mongoose";
 
@@ -13,7 +18,7 @@ export const getCabin = async (id: ObjectId) => {
   return await cabinModel.findById(id);
 };
 
-export const createCabin = async (newCabin: Cabins) => {
+export const createCabin = async (newCabin: newCabinInt) => {
   let message = `Cabin name already exist !`;
   let hasCreated = false;
   const sameCabinName = await cabinModel.findOne({

@@ -1,16 +1,28 @@
 import jwt, { VerifyErrors } from "jsonwebtoken";
 import { config } from "../config/config";
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction, CookieOptions } from "express";
 import { CustomRequest, Users } from "../interfaces/interfaces";
-import { getDataFromCookie, tokenHasExp } from "../services/helpers";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  getDataFromCookie,
+  tokenHasExp,
+} from "../services/helpers";
+
+const cookieOptions: CookieOptions = {
+  httpOnly: true,
+  secure: process.env.PRODUCTION === "production",
+  sameSite: process.env.PRODUCTION === "production" ? "none" : "lax",
+};
 
 export function authenticateToken(
   req: CustomRequest,
   res: Response,
   next: NextFunction
 ) {
-
   const authHeader = req.cookies["jwt"];
+  const refreshAuth = req.cookies["token"];
+
   if (!authHeader) {
     return res
       .status(401)
@@ -21,6 +33,11 @@ export function authenticateToken(
     authHeader,
     config.SECRET_ACCESS,
     (err: VerifyErrors | null, decoded: any) => {
+      if (refreshAuth) {
+        const { userId, role } = getDataFromCookie(req, "jwt") as Users;
+        const accessToken = generateAccessToken({ userId, role });
+        res.cookie("jwt", accessToken, cookieOptions);
+      }
       if (err) {
         return res
           .status(403)
@@ -34,7 +51,6 @@ export function authenticateToken(
 
 export function authRole(roleName: string[]) {
   return function (req: CustomRequest, res: Response, next: NextFunction) {
-
     const authHeader = getDataFromCookie(req, `jwt`);
 
     if (!authHeader) {
@@ -58,12 +74,16 @@ export function authLoggedIn(
   res: Response,
   next: NextFunction
 ) {
-  const access = getDataFromCookie(req, "jwt");
+  const access = getDataFromCookie(req, "jwt") as Users;
   const refresh = getDataFromCookie(req, "token");
-
-  if (tokenHasExp(req, "jwt") || !access || !refresh)
+  if (!access || !refresh) {
     return res.status(400).json({ message: "User is not logged in." });
+  }
+  const userData = { userId: access.userId, role: access.role };
 
+  if (tokenHasExp(req, "jwt")) {
+    generateRefreshToken(userData);
+  }
   next();
 }
 
@@ -86,10 +106,11 @@ export function authSelfDelete(
     : next();
 }
 
-
-export function authSelfAction(req: CustomRequest,
+export function authSelfAction(
+  req: CustomRequest,
   res: Response,
-  next: NextFunction) {
+  next: NextFunction
+) {
   const authHeader = getDataFromCookie(req, "jwt");
   const data = req.body;
 
@@ -101,6 +122,20 @@ export function authSelfAction(req: CustomRequest,
   }
 
   const { userId } = authHeader as { userId: string };
-  userId === data.id ? res.status(400).json({ message: "Employee cannot change his own role." }) : next()
+  userId === data.id
+    ? res.status(400).json({ message: "Employee cannot change his own role." })
+    : next();
+}
 
+export function getUserInfo(
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const userInfo = getDataFromCookie(req, "jwt") as Users;
+  if (!userInfo) {
+    req.user = undefined;
+    return res.status(403).json({ message: "User must login first." });
+  } else req.user = userInfo;
+  next();
 }

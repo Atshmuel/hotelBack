@@ -31,32 +31,44 @@ import jwt from "jsonwebtoken";
 import { config } from "../config/config";
 import { Users } from "../interfaces/interfaces";
 import { ObjectId } from "mongoose";
-import { loginInfo, newUserValidation, updateUserInfo, updateUserPasswordValidation, updateUserRoleValidator } from "../validators/usersVal";
+import {
+  loginInfo,
+  newUserValidation,
+  updateUserInfo,
+  updateUserPasswordValidation,
+  updateUserRoleValidator,
+} from "../validators/usersVal";
 import { idSchema } from "../validators/globalValidation";
 
 export const userRouter = Router();
 
 const cookieOptions: CookieOptions = {
   httpOnly: true,
-  secure: process.env.PRODUCTION === 'production',
-  sameSite: process.env.PRODUCTION === 'production' ? 'none' : "lax"
-}
+  secure: process.env.PRODUCTION === "production",
+  sameSite: process.env.PRODUCTION === "production" ? "none" : "lax",
+};
 
-userRouter.get("/all", authenticateToken, authRole([config.ROLE.ADMIN, config.ROLE.EMPLOYEE, config.ROLE.OWNER]), async (req, res) => {
-  try {
-    const foundUsers = await getAllUsers();
-    if (!foundUsers.length) throw new Error("Could not find users.");
+userRouter.get(
+  "/all",
+  authenticateToken,
+  authRole([config.ROLE.ADMIN, config.ROLE.EMPLOYEE, config.ROLE.OWNER]),
+  async (req, res) => {
+    try {
+      const foundUsers = await getAllUsers();
+      if (!foundUsers.length) throw new Error("Could not find users.");
 
-    res.status(200).json(foundUsers);
-  } catch (error) {
-    res.status(400).json({ message: error?.message });
+      res.status(200).json(foundUsers);
+    } catch (error) {
+      res.status(400).json({ message: error?.message });
+    }
   }
-});
-
+);
 
 userRouter.post(
-  "/signup", authenticateToken,
-  authRole([config.ROLE.OWNER, config.ROLE.ADMIN]), limiter(6000, 2),
+  "/signup",
+  authenticateToken,
+  authRole([config.ROLE.OWNER, config.ROLE.ADMIN]),
+  limiter(6000, 2),
   async (req, res) => {
     const { error } = newUserValidation.validate(req.body);
     if (error) {
@@ -114,16 +126,15 @@ userRouter.post("/login", limiter(60, 5), async (req, res) => {
     const user = await getUser(email.toLowerCase());
     if (!user) throw new Error("User dose not exist!");
     const isValidPassword = await bcrypt.compare(password, user?.password);
-    if (!isValidPassword)
-      throw new Error(`Email or password is wrong.`);
+    if (!isValidPassword) throw new Error(`Email or password is wrong.`);
 
     const { _id: userId, role } = user;
     const accessRole =
       role === config.ROLE.ADMIN
         ? config.ROLE_NUM.ADMIN
         : role === config.ROLE.EMPLOYEE
-          ? config.ROLE_NUM.EMPLOYEE
-          : config.ROLE_NUM.CUSTOMER;
+        ? config.ROLE_NUM.EMPLOYEE
+        : config.ROLE_NUM.CUSTOMER;
     const accessToken = generateAccessToken({ userId, role });
     const refreshToken = generateRefreshToken({ userId, role });
     const userGotTheRefreshToken = await upDateRefreshToken(
@@ -133,10 +144,10 @@ userRouter.post("/login", limiter(60, 5), async (req, res) => {
     );
     if (!userGotTheRefreshToken) throw new Error("Failed to find the user.");
     res.cookie("jwt", accessToken, cookieOptions);
-    res.cookie("token", refreshToken,
-      {
-        ...cookieOptions, expires: new Date(Date.now() + config.THIRTY_DAYS),
-      });
+    res.cookie("token", refreshToken, {
+      ...cookieOptions,
+      expires: new Date(Date.now() + config.THIRTY_DAYS),
+    });
     res.cookie("perm", accessRole);
 
     res.status(200).json({ message: "Logged in" });
@@ -162,8 +173,8 @@ userRouter.get("/login", async (req, res) => {
       role === config.ROLE.ADMIN
         ? config.ROLE_NUM.ADMIN
         : role === config.ROLE.EMPLOYEE
-          ? config.ROLE_NUM.EMPLOYEE
-          : config.ROLE_NUM.CUSTOMER;
+        ? config.ROLE_NUM.EMPLOYEE
+        : config.ROLE_NUM.CUSTOMER;
     const accessToken = generateAccessToken({ userId, role });
     res.cookie("jwt", accessToken, cookieOptions);
     res.cookie("perm", accessRole);
@@ -174,20 +185,17 @@ userRouter.get("/login", async (req, res) => {
   }
 });
 
-userRouter.get(
-  "/userInfo",
-  async (req, res) => {
-    const info = getDataFromCookie(req, "jwt") as Users;
-    const { userId } = info;
-    try {
-      const user = await getUserData(userId);
-      if (!user) throw new Error("Could not find that user.");
-      res.status(200).json(user);
-    } catch (error) {
-      res.status(400).json({ message: error?.message });
-    }
+userRouter.get("/userInfo", async (req, res) => {
+  const info = getDataFromCookie(req, "jwt") as Users;
+  const { userId } = info;
+  try {
+    const user = await getUserData(userId);
+    if (!user) throw new Error("Could not find that user.");
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(400).json({ message: error?.message });
   }
-);
+});
 
 userRouter.get("/logout", authLoggedIn, async (req, res) => {
   const userData = getDataFromCookie(req, "jwt");
@@ -202,21 +210,26 @@ userRouter.get("/logout", authLoggedIn, async (req, res) => {
     return res.status(200).json({ message: "Logged out Successfully, Bye." });
   return res.status(400).json({ message: "Logout failed" });
 });
-userRouter.post("/refresh", authenticateToken, limiter(60 * 60, 4), (req, res) => {
-  const refreshToken = req.cookies["token"];
-  if (!refreshToken) return res.sendStatus(401);
+userRouter.post(
+  "/refresh",
+  authenticateToken,
+  limiter(60 * 60, 4),
+  (req, res) => {
+    const refreshToken = req.cookies["token"];
+    if (!refreshToken) return res.sendStatus(401);
 
-  jwt.verify(refreshToken, config.SECRET_REFRESH, (err, decoded) => {
-    if (err) return res.sendStatus(403);
-    const accessToken = generateAccessToken({
-      userId: decoded?.userId,
-      role: decoded?.role,
+    jwt.verify(refreshToken, config.SECRET_REFRESH, (err, decoded) => {
+      if (err) return res.sendStatus(403);
+      const accessToken = generateAccessToken({
+        userId: decoded?.userId,
+        role: decoded?.role,
+      });
+
+      res.cookie("jwt", accessToken, cookieOptions);
+      res.status(400).json({ accessToken });
     });
-
-    res.cookie("jwt", accessToken, cookieOptions);
-    res.status(400).json({ accessToken });
-  });
-});
+  }
+);
 
 userRouter.delete(
   "/delete",
@@ -245,44 +258,66 @@ userRouter.delete(
   }
 );
 
-userRouter.patch('/update/data', authenticateToken, authRole([config.ROLE.OWNER, config.ROLE.ADMIN, config.ROLE.EMPLOYEE]), authLoggedIn, limiter(60, 5), authSelfAction, async (req, res) => {
-  const { error } = req.body.firstName ? updateUserInfo.validate(req.body) : updateUserRoleValidator.validate(req.body);
-  if (error) {
-    return res.status(400).json({ message: error.message });
-  }
-  const userData = req.body;
-  const cookie = getDataFromCookie(req, "jwt");
-  const { userId } = cookie as Users;
-  try {
-    if (userData.id) {
-      const updatedUser = await updateUserRole(userData)
-      if (!updatedUser) throw Error('Could not update the user role.')
-      return res.status(200).json({ message: 'User role updated successfully.' })
+userRouter.patch(
+  "/update/data",
+  authenticateToken,
+  authRole([config.ROLE.OWNER, config.ROLE.ADMIN, config.ROLE.EMPLOYEE]),
+  authLoggedIn,
+  limiter(60, 5),
+  authSelfAction,
+  async (req, res) => {
+    const { error } = req.body.firstName
+      ? updateUserInfo.validate(req.body)
+      : updateUserRoleValidator.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.message });
     }
-    const updatedUser = await updateUserData(userId, userData)
-    if (!updatedUser) throw new Error('Could not update the user or updated value is not allowed.')
-    res.status(200).json({ message: 'User info updated successfully.' })
-  } catch (error) {
-
-    res.status(400).json({ message: error?.message })
+    const userData = req.body;
+    const cookie = getDataFromCookie(req, "jwt");
+    const { userId } = cookie as Users;
+    try {
+      if (userData.id) {
+        const updatedUser = await updateUserRole(userData);
+        if (!updatedUser) throw Error("Could not update the user role.");
+        return res
+          .status(200)
+          .json({ message: "User role updated successfully." });
+      }
+      const updatedUser = await updateUserData(userId, userData);
+      if (!updatedUser)
+        throw new Error(
+          "Could not update the user or updated value is not allowed."
+        );
+      res.status(200).json({ message: "User info updated successfully." });
+    } catch (error) {
+      res.status(400).json({ message: error?.message });
+    }
   }
-})
+);
 
+userRouter.patch(
+  "/update/password",
+  authenticateToken,
+  authRole([config.ROLE.OWNER]),
+  limiter(60, 2),
+  async (req, res) => {
+    const { error } = updateUserPasswordValidation.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.message });
+    }
+    const passwords = req.body;
+    const cookie = getDataFromCookie(req, "jwt");
+    const { userId } = cookie as Users;
+    try {
+      const updatedUser = await updateUserPassword(userId, passwords);
 
-userRouter.patch('/update/password', authenticateToken, authRole([config.ROLE.OWNER]), limiter(60, 2), async (req, res) => {
-  const { error } = updateUserPasswordValidation.validate(req.body);
-  if (error) {
-    return res.status(400).json({ message: error.message });
+      if (!updatedUser)
+        throw new Error(
+          "Could not update the password or current password is not valid."
+        );
+      res.status(200).json({ message: "Password updated successfully." });
+    } catch (error) {
+      res.status(400).json({ message: error?.message });
+    }
   }
-  const passwords = req.body;
-  const cookie = getDataFromCookie(req, "jwt");
-  const { userId } = cookie as Users;
-  try {
-    const updatedUser = await updateUserPassword(userId, passwords)
-
-    if (!updatedUser) throw new Error('Could not update the password or current password is not valid.')
-    res.status(200).json({ message: 'Password updated successfully.' })
-  } catch (error) {
-    res.status(400).json({ message: error?.message })
-  }
-})
+);

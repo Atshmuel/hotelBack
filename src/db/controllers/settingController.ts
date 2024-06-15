@@ -1,3 +1,4 @@
+import { Settings } from "../../interfaces/interfaces";
 import { settingsModel } from "../models/models";
 
 export const getSettings = async () => {
@@ -9,7 +10,7 @@ export const getSettings = async () => {
   return { hasFound, message, settings };
 };
 
-export const updateSetting = async (field: object) => {
+export const updateSetting = async (field: Settings) => {
   const settingsID = `65e245565858cd9c8645a088`;
 
   let updated = true;

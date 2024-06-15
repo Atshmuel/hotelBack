@@ -1,5 +1,6 @@
 import express from "express";
 import mongoose from "mongoose";
+
 import cors from "cors";
 import { config } from "./config/config";
 import { bookingRouter } from "./routes/bookingRoute";
@@ -10,20 +11,24 @@ import { userRouter } from "./routes/userRoute";
 
 import cookieParser from "cookie-parser";
 import { authLoggedIn } from "./middlewares/authHelpers";
+import { logFileUse, writeToFile } from "./services/fs";
 
-const { PORT, DB } = config;
+const { PORT, DB, LOGS_FILE } = config;
 
 const app = express();
 app.use(
   cors({
-    origin: ["https://management-wildhotel.onrender.com", 'http://localhost:5173'],
+    origin: [
+      "https://management-wildhotel.onrender.com",
+      "http://localhost:5173",
+    ],
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
   })
 );
 app.use(express.json());
 app.use(cookieParser());
-app.set('trust proxy', false);
+app.set("trust proxy", false);
 app.use("/bookings", authLoggedIn, bookingRouter);
 app.use("/cabins", authLoggedIn, cabinRouter);
 app.use("/guests", authLoggedIn, guestRouter);
@@ -32,13 +37,16 @@ app.use("/users", userRouter);
 
 const main = async () => {
   try {
+    logFileUse(LOGS_FILE);
     await mongoose.connect(`${DB}`);
-    console.log(mongoose.connection.readyState === 1 && `Connected to DB.`);
     app.listen(PORT, () => {
+      console.log(mongoose.connection.readyState === 1 && `Connected to DB.`);
       console.log(`Listening on port ${PORT}`);
+      writeToFile(LOGS_FILE, `Server running.`);
     });
   } catch (error) {
-    console.error("Error connecting to DB:", error);
+    console.error("Error:", error);
+    writeToFile(LOGS_FILE, error);
     process.exit(1);
   }
 };
