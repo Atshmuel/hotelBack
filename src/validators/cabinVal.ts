@@ -1,6 +1,7 @@
 import Joi from "joi";
 
 export const newCabinValidator = Joi.object({
+  createdAt: Joi.string().optional(),
   name: Joi.string().required(),
   maxCapacity: Joi.number().required(),
   regularPrice: Joi.number().required(),

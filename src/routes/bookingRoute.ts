@@ -108,8 +108,7 @@ bookingRouter.get("/", getUserInfo, async (req: CustomRequest, res) => {
   } catch (error) {
     writeToFile(
       config.LOGS_FILE,
-      `${error}\nwhen booking ${bookingId} requested${
-        userData ? " by user:" + userData?.userId : ""
+      `${error}\nwhen booking ${bookingId} requested${userData ? " by user:" + userData?.userId : ""
       }.`
     );
     res.status(400).json({ error: error?.message });
@@ -118,6 +117,7 @@ bookingRouter.get("/", getUserInfo, async (req: CustomRequest, res) => {
 
 bookingRouter.patch(
   "/",
+  getUserInfo,
   authRole([config.ROLE.OWNER, config.ROLE.ADMIN, config.ROLE.EMPLOYEE]),
   limiter(60, 10),
   async (req: CustomRequest, res) => {
@@ -142,18 +142,15 @@ bookingRouter.patch(
       writeToFile(
         config.LOGS_FILE,
         `User: ${userData.userId} updated booking ${bookingId}\n new data:
-        ${newData?.status ? `Status: ${newData?.status}\n` : ""}${
-          newData?.extrasPrice ? `extarsPrices: ${newData?.extrasPrice}\n` : ""
-        }${newData?.totalPrice ? `totalPrice: ${newData?.totalPrice}\n` : ""}${
-          newData?.hasBreakfast ? `Breakfast: ${newData?.hasBreakfast}\n` : ""
+        ${newData?.status ? `Status: ${newData?.status}\n` : ""}${newData?.extrasPrice ? `extarsPrices: ${newData?.extrasPrice}\n` : ""
+        }${newData?.totalPrice ? `totalPrice: ${newData?.totalPrice}\n` : ""}${newData?.hasBreakfast ? `Breakfast: ${newData?.hasBreakfast}\n` : ""
         }${newData?.isPaid ? `Paid: ${newData?.isPaid}\n` : ""}`
       );
       res.status(200).json(bookingId);
     } catch (error) {
       writeToFile(
         config.LOGS_FILE,
-        `${error}\nwhen booking ${bookingId} requested${
-          userData ? " by user:" + userData?.userId : ""
+        `${error}\nwhen booking ${bookingId} requested${userData ? " by user:" + userData?.userId : ""
         }.`
       );
       res.status(400).json(error.message);
@@ -179,16 +176,14 @@ bookingRouter.delete(
       if (!hasDeleted || error) throw new Error(error);
       writeToFile(
         config.LOGS_FILE,
-        `Booking ${bookingId} has been deleted${
-          userData ? " by user:" + userData?.userId : ""
+        `Booking ${bookingId} has been deleted${userData ? " by user:" + userData?.userId : ""
         }.`
       );
       res.status(200).json(hasDeleted);
     } catch (error) {
       writeToFile(
         config.LOGS_FILE,
-        `${error}\nwhen tried to delete booking ${bookingId}${
-          userData ? " by user:" + userData?.userId : ""
+        `${error}\nwhen tried to delete booking ${bookingId}${userData ? " by user:" + userData?.userId : ""
         }.`
       );
       res.status(400).json(error.message);
@@ -210,16 +205,14 @@ bookingRouter.get("/from", getUserInfo, async (req: CustomRequest, res) => {
     if (!bookings) throw new Error("Failed to get the data.");
     writeToFile(
       config.LOGS_FILE,
-      `Bookings from ${last} and ${fields} found,${
-        userData ? " requested by user:" + userData?.userId : ""
+      `Bookings from ${last} and ${fields} found,${userData ? " requested by user:" + userData?.userId : ""
       }.`
     );
     res.status(200).json(bookings);
   } catch (error) {
     writeToFile(
       config.LOGS_FILE,
-      `${error}\nwhen booking from ${last} and ${fields} requested${
-        userData ? " by user:" + userData?.userId : ""
+      `${error}\nwhen booking from ${last} and ${fields} requested${userData ? " by user:" + userData?.userId : ""
       }.`
     );
     res.status(400).json(error.message);
