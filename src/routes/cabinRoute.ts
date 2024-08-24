@@ -19,8 +19,7 @@ import { Cabins, CustomRequest, newCabinInt } from "../interfaces/interfaces";
 import { writeToFile } from "../services/fs";
 export const cabinRouter = Router();
 
-cabinRouter.get("/", getUserInfo, async (req: CustomRequest, res) => {
-  const { userId } = req.user;
+cabinRouter.get("/", async (req: CustomRequest, res) => {
   try {
     const cabinsData: {
       hasFound: boolean;
@@ -28,19 +27,13 @@ cabinRouter.get("/", getUserInfo, async (req: CustomRequest, res) => {
       cabinsArr: Object[];
     } = await getCabins();
     if (!cabinsData.hasFound) throw new Error(`${cabinsData?.message}`);
-    writeToFile(config.LOGS_FILE, `Found cabins data according to ${userId}.`);
     return res.status(200).json(cabinsData?.cabinsArr);
   } catch (error: any) {
-    writeToFile(
-      config.LOGS_FILE,
-      `${error} when cabins data requested by user ${userId}.`
-    );
     return res.status(400).json(error?.message);
   }
 });
 
-cabinRouter.get("/byID", getUserInfo, async (req: CustomRequest, res) => {
-  const { userId } = req.user;
+cabinRouter.get("/byID", async (req: CustomRequest, res) => {
   const { id }: { id?: ObjectId } = req.query;
   const { error } = idSchema.validate(id);
   if (error) {
@@ -49,16 +42,8 @@ cabinRouter.get("/byID", getUserInfo, async (req: CustomRequest, res) => {
   try {
     const cabinData = await getCabin(id);
     if (!cabinData) throw new Error(`Failed to find this cabin ID (${id})`);
-    writeToFile(
-      config.LOGS_FILE,
-      `Cabin ${id} data requested by user ${userId}.`
-    );
     res.status(200).json(cabinData);
   } catch (error) {
-    writeToFile(
-      config.LOGS_FILE,
-      `${error} when cabin ${id} data requested by user ${userId}.`
-    );
     res.status(400).json({ error: error?.message });
   }
 });
@@ -150,13 +135,11 @@ cabinRouter.patch(
         `Cabin ${id} has been updated by user ${userId}
         New Data:
         Name: ${newData.name ? newData.name : ""}
-        Capacity: ${
-          newData.maxCapacity ? newData.maxCapacity : "Hasn't Changed"
+        Capacity: ${newData.maxCapacity ? newData.maxCapacity : "Hasn't Changed"
         }
         Price: ${newData.regularPrice ? newData.regularPrice : "Hasn't Changed"}
         Discount: ${newData.discount ? newData.discount : "Hasn't Changed"}
-        Description: ${
-          newData.description ? newData.description : "Hasn't Changed"
+        Description: ${newData.description ? newData.description : "Hasn't Changed"
         }
         Img URL: ${newData.imgUrl ? newData.imgUrl : "Hasn't Changed"}`
       );

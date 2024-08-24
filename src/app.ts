@@ -21,6 +21,7 @@ app.use(
     origin: [
       "https://management-wildhotel.onrender.com",
       "http://localhost:5173",
+      "http://localhost:3000",
     ],
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
@@ -30,7 +31,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.set("trust proxy", false);
 app.use("/bookings", authLoggedIn, bookingRouter);
-app.use("/cabins", authLoggedIn, cabinRouter);
+app.use("/cabins", cabinRouter);
 app.use("/guests", authLoggedIn, guestRouter);
 app.use("/settings", authLoggedIn, settingsRoute);
 app.use("/users", userRouter);

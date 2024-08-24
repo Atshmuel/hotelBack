@@ -93,7 +93,8 @@ export const deleteUser = async (id: ObjectId) => {
 export const updateUserData = async (id: ObjectId, data: Users) => {
   const { firstName, lastName, phone } = data;
   if (!firstName || !lastName || !phone) return false;
-  if (await userModel.findOne({ phone: phone })) return false;
+  if ((await userModel.findOne({ phone: phone })).id !== id) return false;
+
   const userUpdated = await userModel.findByIdAndUpdate(id, data);
   return userUpdated ? true : false;
 };

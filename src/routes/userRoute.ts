@@ -133,8 +133,8 @@ userRouter.post("/login", limiter(60, 5), async (req, res) => {
       role === config.ROLE.ADMIN
         ? config.ROLE_NUM.ADMIN
         : role === config.ROLE.EMPLOYEE
-        ? config.ROLE_NUM.EMPLOYEE
-        : config.ROLE_NUM.CUSTOMER;
+          ? config.ROLE_NUM.EMPLOYEE
+          : config.ROLE_NUM.CUSTOMER;
     const accessToken = generateAccessToken({ userId, role });
     const refreshToken = generateRefreshToken({ userId, role });
     const userGotTheRefreshToken = await upDateRefreshToken(
@@ -173,8 +173,8 @@ userRouter.get("/login", async (req, res) => {
       role === config.ROLE.ADMIN
         ? config.ROLE_NUM.ADMIN
         : role === config.ROLE.EMPLOYEE
-        ? config.ROLE_NUM.EMPLOYEE
-        : config.ROLE_NUM.CUSTOMER;
+          ? config.ROLE_NUM.EMPLOYEE
+          : config.ROLE_NUM.CUSTOMER;
     const accessToken = generateAccessToken({ userId, role });
     res.cookie("jwt", accessToken, cookieOptions);
     res.cookie("perm", accessRole);
@@ -269,6 +269,7 @@ userRouter.patch(
     const { error } = req.body.firstName
       ? updateUserInfo.validate(req.body)
       : updateUserRoleValidator.validate(req.body);
+
     if (error) {
       return res.status(400).json({ message: error.message });
     }
