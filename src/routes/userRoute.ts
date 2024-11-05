@@ -1,4 +1,4 @@
-import { CookieOptions, Request, Router } from "express";
+import { CookieOptions, Router } from "express";
 import {
   checkUserTokens,
   createUser,

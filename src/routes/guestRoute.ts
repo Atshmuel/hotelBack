@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { idSchema } from "../validators/globalValidation";
-import { getGuest } from "../db/controllers/guestController";
+import { createGuset, getGuest, guestByEmail, updateGuest } from "../db/controllers/guestController";
 import { ObjectId } from "mongoose";
 import { config } from "../config/config";
 import { CustomRequest } from "../interfaces/interfaces";
@@ -33,3 +33,26 @@ guestRouter.get("/", getUserInfo, async (req: CustomRequest, res) => {
     res.status(400).json({ error: error?.message });
   }
 });
+
+guestRouter.post('/', async (req, res) => {
+  const { fullName, email } = req.body
+  if (!fullName || !email) return res.status(400).json({ message: 'Name or email is missing !' })
+  const guest = await createGuset(fullName, email)
+  if (!guest) return res.status(400).json({ message: "Failed to create new user" });
+  return res.status(200).json(guest)
+})
+
+guestRouter.get('/guest/:email', async (req, res) => {
+  const guestEmail: string | undefined = req.params.email
+  const guest = await guestByEmail(guestEmail)
+  if (!guest) return res.status(400).json({ message: "No such user." });
+  return res.status(200).json(guest)
+})
+
+guestRouter.patch('/:id', async (req, res) => {
+  const id: string | undefined = req.params.id
+  if (!id) return res.sendStatus(304);
+  const { nationalId, flag, nationality }: { nationalId: number, flag: string, nationality: string } = req.body
+  const updated = await updateGuest(nationalId, nationality, flag, id)
+  return updated ? res.sendStatus(200) : res.sendStatus(304)
+})

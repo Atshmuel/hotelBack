@@ -30,10 +30,10 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 app.set("trust proxy", false);
-app.use("/bookings", authLoggedIn, bookingRouter);
+app.use("/bookings", bookingRouter);
 app.use("/cabins", cabinRouter);
-app.use("/guests", authLoggedIn, guestRouter);
-app.use("/settings", authLoggedIn, settingsRoute);
+app.use("/guests", guestRouter);
+app.use("/settings", settingsRoute);
 app.use("/users", userRouter);
 
 const main = async () => {

@@ -22,7 +22,7 @@ export interface CabinUpdateData {
 }
 
 export interface Guests extends Document {
-  createdAt: Date;
+  createdAt?: Date;
   fullName: string;
   email: string;
   nationalID: number;

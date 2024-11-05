@@ -40,11 +40,26 @@ export const getBookingById = async (id: ObjectId) => {
   return { booking, guest, cabin };
 };
 
+export const getCabinBookings = async (id: string): Promise<Bookings[]> => {
+  let today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+  const a = (await bookingModel.find()).filter(booking =>
+    booking.cabinID.toString() === id)
+  const bookings = (await bookingModel.find()).filter(booking =>
+    booking.cabinID.toString() === id).filter(booking =>
+      booking.startDate >= today || booking.status === 'checked-in'
+    )
+
+  return bookings
+}
+
+
+
 export const getAllBookings = async (
-  filter: string,
-  field: string,
-  direction: string,
-  page: number
+  filter: string = 'all',
+  field: string = "startDate",
+  direction: string = "desc",
+  page: number = 1
 ) => {
   const sortBy = { [field]: direction as SortOrder };
   const skipVal = (+page - 1) * config.PAGE_SIZE;

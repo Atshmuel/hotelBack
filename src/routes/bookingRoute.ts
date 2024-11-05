@@ -10,12 +10,13 @@ import {
   getAllBookings,
   getBookingById,
   getBookingsFromDate,
+  getCabinBookings,
   updateBooking,
 } from "../db/controllers/bookingController";
 import { ObjectId } from "mongoose";
 import { authRole, getUserInfo } from "../middlewares/authHelpers";
 import { config } from "../config/config";
-import { getDataFromCookie, limiter } from "../services/helpers";
+import { limiter } from "../services/helpers";
 import { idSchema } from "../validators/globalValidation";
 import { writeToFile } from "../services/fs";
 import { CustomRequest } from "../interfaces/interfaces";
@@ -57,10 +58,23 @@ bookingRouter.post(
   }
 );
 
-bookingRouter.get("/all", getUserInfo, async (req: CustomRequest, res) => {
+bookingRouter.get('/bookingByCabinId', async (req, res) => {
+  const { id }: { id?: string } = req.query;
+  const { error } = idSchema.validate(id);
+  if (error) return res.status(400).json({ message: 'id is not valid !' })
   try {
-    const userData = req?.user;
-    if (!userData) throw new Error("Failed to get user data.");
+    const bookings = await getCabinBookings(id)
+    if (!bookings.length) throw Error("Could not find any booking")
+    res.status(200).json(bookings)
+  } catch (error) {
+    res.status(404).json({ error: error?.message });
+  }
+
+
+})
+
+bookingRouter.get("/all", async (req: CustomRequest, res) => {
+  try {
     const {
       filter = "all",
       sortBy = "startDate-desc",
@@ -78,13 +92,8 @@ bookingRouter.get("/all", getUserInfo, async (req: CustomRequest, res) => {
       guests?: object[];
       totalBookings?: number;
     } = (await getAllBookings(filter, field, direction, page)) || {};
-    writeToFile(
-      config.LOGS_FILE,
-      `User: ${userData.userId} requested all bookings.`
-    );
     res.status(200).json({ bookings, cabins, guests, totalBookings });
   } catch (error: any) {
-    writeToFile(config.LOGS_FILE, `${error}\nwhen requested all bookings.`);
     res.status(500).json({ error: error?.message });
   }
 });
