@@ -64,7 +64,7 @@ export const editCabinData = async (id: ObjectId, newCabinData: Cabins) => {
     regularPrice: oldRegularPrice,
     discount: oldDiscount,
     description: oldDescription,
-    imgUrl: oldImgUrl,
+    imgsUrl: oldImgsUrl,
   } = oldCabinData;
   const {
     name: newName,
@@ -72,7 +72,7 @@ export const editCabinData = async (id: ObjectId, newCabinData: Cabins) => {
     regularPrice: newRegularPrice,
     discount: newDiscount,
     description: newDescription,
-    imgUrl: newImgUrl,
+    imgsUrl: newImgsUrl,
   } = newCabinData;
 
   const alreadyExits = newData !== null;
@@ -91,7 +91,7 @@ export const editCabinData = async (id: ObjectId, newCabinData: Cabins) => {
     updates.regularPrice = newRegularPrice;
   if (oldDiscount !== newDiscount) updates.discount = newDiscount;
   if (oldDescription !== newDescription) updates.description = newDescription;
-  if (oldImgUrl !== newImgUrl) updates.imgUrl = newImgUrl;
+  if (oldImgsUrl !== newImgsUrl) updates.imgsUrl = newImgsUrl;
   if (Object.keys(updates).length > 0) {
     updates.lastUpdate = getTime();
     await cabinModel.findByIdAndUpdate(id, updates);

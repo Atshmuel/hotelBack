@@ -1,6 +1,5 @@
 import { ObjectId } from "mongoose";
 import { guestModel } from "../models/models";
-import { Guests } from "../../interfaces/interfaces";
 
 export const getGuest = async (id: ObjectId) => {
   return await guestModel.findById(id);
@@ -11,7 +10,7 @@ export const createGuset = async (fullName: string, email: string) => {
   return guest
 }
 
-export const updateGuest = async (nationalID: number, nationality: string, flag: string, id: string): Promise<boolean> => {
+export const updateGuest = async (nationalID: string, nationality: string, flag: string, id: string): Promise<boolean> => {
   const guest = await guestModel.findByIdAndUpdate(id, { nationalID, countryFlag: flag, nationality })
   return guest ? true : false
 }
@@ -22,3 +21,4 @@ export const guestByEmail = async (email: string) => {
 
   return guest;
 };
+

@@ -19,41 +19,25 @@ import { config } from "../config/config";
 import { limiter } from "../services/helpers";
 import { idSchema } from "../validators/globalValidation";
 import { writeToFile } from "../services/fs";
-import { CustomRequest } from "../interfaces/interfaces";
+import { BookingUpdate, CustomRequest } from "../interfaces/interfaces";
 export const bookingRouter = Router();
 
 bookingRouter.post(
   "/new",
-  limiter(60, 1),
-  authRole([config.ROLE.OWNER, config.ROLE.ADMIN]),
-  async (req: CustomRequest, res) => {
-    const userData = req?.user;
+  limiter(60, 999999),
+  async (req, res) => {
     const data = req.body;
     const { error } = newBookingValidator.validate(data);
     try {
-      if (!userData) throw new Error("Failed to get user data.");
+      if (error) return res.status(400).json({ error: error.details[0].message });
+      const { hasCreated, message } = await createNewBooking({ ...data, createdAt: new Date() });
 
-      if (error) res.status(400).json({ error: error.details[0].message });
-      const hasCreated = await createNewBooking(data);
       if (!hasCreated) {
-        throw new Error(
-          "Could not create your booking, we're currently encountered a db problem, please try again."
-        );
+        throw new Error(message);
       }
-      writeToFile(
-        config.LOGS_FILE,
-        `new booking has been created by user ${userData.userId}
-        ${data}`
-      );
-      res.status(201).json({
-        message: `Your booking has been created successfully, See you soon.`,
-      });
+      return res.status(201).json({ message, redirect: '/cabins/thankyou' })
     } catch (error: any) {
-      writeToFile(
-        config.LOGS_FILE,
-        `${error}, failed to create new booking,\nrequested by user ${userData.userId}\n${data}`
-      );
-      res.status(500).json({ error: error?.message });
+      return res.status(400).json({ error: error?.message });
     }
   }
 );
@@ -98,31 +82,33 @@ bookingRouter.get("/all", async (req: CustomRequest, res) => {
   }
 });
 
-bookingRouter.get("/", getUserInfo, async (req: CustomRequest, res) => {
-  const userData = req?.user;
+bookingRouter.get("/", async (req, res) => {
   const { bookingId }: { bookingId?: ObjectId } = req.query;
   const { error } = idSchema.validate(bookingId);
   if (error) {
     return res.status(400).json({ message: error.message });
   }
   try {
-    if (!userData) throw new Error("Failed to get user data.");
     const { booking, guest, cabin } = await getBookingById(bookingId);
     if (!booking) throw new Error("Could not find this booking id.");
-    writeToFile(
-      config.LOGS_FILE,
-      `User: ${userData.userId} requested booking ${bookingId} data.`
-    );
+
     res.status(200).json({ booking, guest, cabin });
   } catch (error) {
-    writeToFile(
-      config.LOGS_FILE,
-      `${error}\nwhen booking ${bookingId} requested${userData ? " by user:" + userData?.userId : ""
-      }.`
-    );
     res.status(400).json({ error: error?.message });
   }
 });
+
+bookingRouter.get('/booking/:id', async (req, res) => {
+  const id: string | ObjectId = req.params.id
+  const { error } = idSchema.validate(id)
+
+  if (error) return res.sendStatus(400)
+  const { booking, cabin, guest } = await getBookingById(id)
+  if (!booking || !cabin || !guest) return res.sendStatus(400)
+  return res.status(200).json({ booking, cabin, guest })
+
+})
+
 
 bookingRouter.patch(
   "/",
@@ -167,34 +153,33 @@ bookingRouter.patch(
   }
 );
 
+bookingRouter.patch('/update/:id', async (req, res) => {
+  const id: string | ObjectId = req.params.id
+  const { numGuests, observations }: { numGuests: number, observations: string } = req.body
+  const { error } = idSchema.validate(id)
+  if (Number.isNaN(Number(numGuests))) return res.sendStatus(400)
+  const data: BookingUpdate = { numGuests: Number(numGuests), observations }
+  if (error) return res.sendStatus(400)
+  const updated = await updateBooking(id, data)
+  return updated ? res.sendStatus(200) : res.sendStatus(400)
+})
+
 bookingRouter.delete(
   "/",
-
-  authRole([config.ROLE.OWNER]),
+  authRole([config.ROLE.ADMIN]),
   limiter(60 * 2, 2),
-  async (req: CustomRequest, res) => {
-    const userData = req?.user;
+  async (req, res) => {
     const { bookingId }: { bookingId?: ObjectId } = req.query;
     const { error } = idSchema.validate(bookingId);
     if (error) {
       return res.status(400).json({ message: error.message });
     }
     try {
-      if (!userData) throw new Error("Failed to get user data.");
       const { hasDeleted, error } = await deleteBooking(bookingId);
       if (!hasDeleted || error) throw new Error(error);
-      writeToFile(
-        config.LOGS_FILE,
-        `Booking ${bookingId} has been deleted${userData ? " by user:" + userData?.userId : ""
-        }.`
-      );
+
       res.status(200).json(hasDeleted);
     } catch (error) {
-      writeToFile(
-        config.LOGS_FILE,
-        `${error}\nwhen tried to delete booking ${bookingId}${userData ? " by user:" + userData?.userId : ""
-        }.`
-      );
       res.status(400).json(error.message);
     }
   }

@@ -11,15 +11,14 @@ import {
   newCabinDataValidator,
   newCabinValidator,
 } from "../validators/cabinVal";
-import { authRole, getUserInfo } from "../middlewares/authHelpers";
+import { authRole } from "../middlewares/authHelpers";
 import { ObjectId } from "mongoose";
 import { config } from "../config/config";
 import { limiter } from "../services/helpers";
 import { Cabins, CustomRequest, newCabinInt } from "../interfaces/interfaces";
-import { writeToFile } from "../services/fs";
 export const cabinRouter = Router();
 
-cabinRouter.get("/", async (req: CustomRequest, res) => {
+cabinRouter.get("/", async (req, res) => {
   try {
     const cabinsData: {
       hasFound: boolean;
@@ -33,7 +32,7 @@ cabinRouter.get("/", async (req: CustomRequest, res) => {
   }
 });
 
-cabinRouter.get("/byID", async (req: CustomRequest, res) => {
+cabinRouter.get("/byID", async (req, res) => {
   const { id }: { id?: ObjectId } = req.query;
   const { error } = idSchema.validate(id);
   if (error) {
@@ -50,10 +49,8 @@ cabinRouter.get("/byID", async (req: CustomRequest, res) => {
 
 cabinRouter.delete(
   "/",
-  getUserInfo,
   authRole([config.ROLE.OWNER]),
-  async (req: CustomRequest, res) => {
-    const { userId } = req.user;
+  async (req, res) => {
     const { id }: { id?: ObjectId } = req.query;
     const { error } = idSchema.validate(id);
     if (error) {
@@ -63,13 +60,8 @@ cabinRouter.delete(
       const hasBeenDeleted = await deleteCabin(id);
       if (!hasBeenDeleted)
         throw new Error("Cloud not delete the cabin, Please try again later.");
-      writeToFile(config.LOGS_FILE, `Cabin ${id} deleted by user ${userId}.`);
       res.status(200).json({ message: "Cabin has been delete successfully." });
     } catch (error) {
-      writeToFile(
-        config.LOGS_FILE,
-        `${error} while tring to delete cabin ${id} by user ${userId}.`
-      );
       res.status(400).json({ error: error?.message });
     }
   }
@@ -77,11 +69,9 @@ cabinRouter.delete(
 
 cabinRouter.post(
   "/",
-  getUserInfo,
   authRole([config.ROLE.OWNER, config.ROLE.ADMIN]),
   limiter(60, 1),
-  async (req: CustomRequest, res) => {
-    const { userId } = req.user;
+  async (req, res) => {
     const { error } = newCabinValidator.validate(req.body);
     const newCabin = req.body as newCabinInt;
     if (error) {
@@ -90,16 +80,9 @@ cabinRouter.post(
     try {
       const { hasCreated, message } = await createCabin(newCabin);
       if (!hasCreated) throw new Error(message);
-      writeToFile(
-        config.LOGS_FILE,
-        `Cabin ${newCabin.name} has been created by user ${userId}.`
-      );
+
       res.status(201).json({ message: message });
     } catch (error) {
-      writeToFile(
-        config.LOGS_FILE,
-        `${error} while tring to create new cabin by user ${userId}.`
-      );
       res.status(400).json({ error: error?.message });
     }
   }
@@ -107,10 +90,8 @@ cabinRouter.post(
 
 cabinRouter.patch(
   "/",
-  getUserInfo,
-  authRole([config.ROLE.OWNER]),
+  authRole([config.ROLE.OWNER, config.ROLE.ADMIN]),
   async (req: CustomRequest, res) => {
-    const { userId } = req.user;
     const { id }: { id?: ObjectId } = req.query;
     const { error: idError } = idSchema.validate(id);
     const { error: dataError } = newCabinDataValidator.validate(req.body);
@@ -129,26 +110,8 @@ cabinRouter.patch(
         message: string;
       };
 
-      if (!hasUpdated) throw new Error(`${updateMessage}`);
-      writeToFile(
-        config.LOGS_FILE,
-        `Cabin ${id} has been updated by user ${userId}
-        New Data:
-        Name: ${newData.name ? newData.name : ""}
-        Capacity: ${newData.maxCapacity ? newData.maxCapacity : "Hasn't Changed"
-        }
-        Price: ${newData.regularPrice ? newData.regularPrice : "Hasn't Changed"}
-        Discount: ${newData.discount ? newData.discount : "Hasn't Changed"}
-        Description: ${newData.description ? newData.description : "Hasn't Changed"
-        }
-        Img URL: ${newData.imgUrl ? newData.imgUrl : "Hasn't Changed"}`
-      );
       res.status(200).json({ message: `${updateMessage}` });
     } catch (error) {
-      writeToFile(
-        config.LOGS_FILE,
-        `${error} while tring to update cabin ${id} by user ${userId}.`
-      );
       res.status(400).json({ error: error?.message });
     }
   }

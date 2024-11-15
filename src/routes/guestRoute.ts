@@ -6,6 +6,7 @@ import { config } from "../config/config";
 import { CustomRequest } from "../interfaces/interfaces";
 import { writeToFile } from "../services/fs";
 import { getUserInfo } from "../middlewares/authHelpers";
+import { deleteBooking, guestBookings } from "../db/controllers/bookingController";
 export const guestRouter = Router();
 
 guestRouter.get("/", getUserInfo, async (req: CustomRequest, res) => {
@@ -43,16 +44,34 @@ guestRouter.post('/', async (req, res) => {
 })
 
 guestRouter.get('/guest/:email', async (req, res) => {
-  const guestEmail: string | undefined = req.params.email
-  const guest = await guestByEmail(guestEmail)
+  const email: string | undefined = req.params.email
+  if (!email) return res.status(400).json({ message: "Please provide email !" })
+  const guest = await guestByEmail(email)
   if (!guest) return res.status(400).json({ message: "No such user." });
   return res.status(200).json(guest)
+})
+guestRouter.get('/bookings/:guestId', async (req, res) => {
+  const id: string | undefined = req.params.guestId
+  const { error } = idSchema.validate(id)
+
+  if (error) return res.status(400).json({ message: error.message })
+  const data = await guestBookings(id)
+  return data.length > 0 ? res.status(200).json(data) : res.status(400).json(data)
+})
+
+guestRouter.delete('/bookings/delete/:id', async (req, res) => {
+  const id: string | ObjectId = req.params.id
+  const { error } = idSchema.validate(id)
+  if (error) return res.sendStatus(400)
+  const { hasDeleted } = await deleteBooking(id)
+  return hasDeleted ? res.sendStatus(200) : res.sendStatus(400)
 })
 
 guestRouter.patch('/:id', async (req, res) => {
   const id: string | undefined = req.params.id
-  if (!id) return res.sendStatus(304);
-  const { nationalId, flag, nationality }: { nationalId: number, flag: string, nationality: string } = req.body
+  const { error } = idSchema.validate(id)
+  if (error) return res.sendStatus(304)
+  const { nationalId, flag, nationality }: { nationalId: string, flag: string, nationality: string } = req.body
   const updated = await updateGuest(nationalId, nationality, flag, id)
   return updated ? res.sendStatus(200) : res.sendStatus(304)
 })

@@ -10,7 +10,6 @@ import { settingsRoute } from "./routes/settingsRoute";
 import { userRouter } from "./routes/userRoute";
 
 import cookieParser from "cookie-parser";
-import { authLoggedIn } from "./middlewares/authHelpers";
 import { logFileUse, writeToFile } from "./services/fs";
 
 const { PORT, DB, LOGS_FILE } = config;

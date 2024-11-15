@@ -7,7 +7,7 @@ export const newCabinValidator = Joi.object({
   regularPrice: Joi.number().required(),
   discount: Joi.number(),
   description: Joi.string().required(),
-  imgUrl: Joi.string().required(),
+  imgsUrl: Joi.array().items(Joi.string()).required(),
 });
 
 export const newCabinDataValidator = Joi.object({
@@ -17,7 +17,7 @@ export const newCabinDataValidator = Joi.object({
   regularPrice: Joi.number().required(),
   discount: Joi.number(),
   description: Joi.string().required(),
-  imgUrl: Joi.string().required(),
+  imgsUrl: Joi.array().items(Joi.string()).required(),
   __v: Joi.number().optional(),
   lastUpdate: Joi.string().optional(),
 });

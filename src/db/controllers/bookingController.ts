@@ -3,22 +3,36 @@ import { BookingUpdate, Bookings } from "../../interfaces/interfaces";
 import { SortOrder, ObjectId } from "mongoose";
 import { config } from "../../config/config";
 import { getTime } from "../../services/helpers";
+import { eachDayOfInterval, isAfter, isEqual } from "date-fns";
 
 export const createNewBooking = async (data: Bookings) => {
+  const allBookings = await getCabinBookings(data.cabinID)
+  const allBookingDates = allBookings?.length ? allBookings.flatMap(booking =>
+    eachDayOfInterval({ start: booking.startDate, end: booking.endDate })
+  ) : []
+  const bookingDates = eachDayOfInterval({ start: data.startDate, end: data.endDate })
+
+  const alreadyBooked = allBookingDates?.length && allBookingDates.some(date1 => {
+    return bookingDates.some(date2 => {
+      return isEqual(date1, date2)
+    })
+  })
+  if (alreadyBooked) return { hasCreated: false, message: "Dates already booked!." }
+
   const newBooking = await bookingModel.create(data);
-  const findNewBooking = await bookingModel.findById(newBooking?._id);
-  const hasCreated =
-    findNewBooking?._id.toString() === undefined ? false : true;
-  return hasCreated;
+  if (!newBooking) return { hasCreated: false, message: "Failed to reserve booking." }
+
+  return { hasCreated: true, message: "booking reserved successfully" }
 };
 
-export const updateBooking = async (id: ObjectId, data: BookingUpdate) => {
-  const newData = { ...data, lastUpdate: getTime() };
+export const updateBooking = async (id: ObjectId | string, data: BookingUpdate) => {
+  const oldBookingData = await bookingModel.findById(id);
+  const newData = { ...oldBookingData.toObject(), ...data, lastUpdate: getTime() };
   const updatedBooking = await bookingModel.findByIdAndUpdate(id, newData);
   return updatedBooking ? true : false;
 };
 
-export const deleteBooking = async (id: ObjectId) => {
+export const deleteBooking = async (id: ObjectId | string) => {
   let error;
   let hasDeleted;
 
@@ -32,7 +46,7 @@ export const deleteBooking = async (id: ObjectId) => {
   return { hasDeleted, error };
 };
 
-export const getBookingById = async (id: ObjectId) => {
+export const getBookingById = async (id: ObjectId | string) => {
   const booking = await bookingModel.findById(id);
   const guest = await guestModel.findById(booking?.guestID);
   const cabin = await cabinModel.findById(booking?.cabinID);
@@ -40,16 +54,14 @@ export const getBookingById = async (id: ObjectId) => {
   return { booking, guest, cabin };
 };
 
-export const getCabinBookings = async (id: string): Promise<Bookings[]> => {
+export const getCabinBookings = async (id: ObjectId | string): Promise<Bookings[]> => {
   let today = new Date();
   today.setUTCHours(0, 0, 0, 0);
-  const a = (await bookingModel.find()).filter(booking =>
-    booking.cabinID.toString() === id)
+
   const bookings = (await bookingModel.find()).filter(booking =>
     booking.cabinID.toString() === id).filter(booking =>
-      booking.startDate >= today || booking.status === 'checked-in'
+      isEqual(booking.startDate, today) || isAfter(booking.startDate, today) || booking.status === 'checked-in'
     )
-
   return bookings
 }
 
@@ -114,3 +126,20 @@ export const getBookingsFromDate = async (last: number, fields: string) => {
 
   return bookings;
 };
+
+
+export const guestBookings = async (id: string, field = 'startDate', direction: 1 | -1 = -1) => {
+
+  const bookings = await bookingModel.find({ guestID: id }).sort({ [field]: direction })
+  const cabinsInfo = await Promise.all(
+    bookings.map(async (booking) => {
+      const cabin = await cabinModel.findById(booking?.cabinID);
+      return { id: cabin._id, name: cabin.name, img: cabin.imgsUrl.at(0) }
+    })
+  )
+  const updatedBookings = bookings.map((booking, i) => {
+    return { ...booking.toObject(), cabinName: cabinsInfo.at(i).name, cabinImg: cabinsInfo.at(i).img }
+  })
+
+  return updatedBookings
+}
