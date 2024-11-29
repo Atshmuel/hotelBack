@@ -18,6 +18,7 @@ export const newCabinDataValidator = Joi.object({
   discount: Joi.number(),
   description: Joi.string().required(),
   imgsUrl: Joi.array().items(Joi.string()).required(),
+  productId: Joi.string(),
   __v: Joi.number().optional(),
   lastUpdate: Joi.string().optional(),
 });

@@ -1,4 +1,5 @@
-import { CookieOptions, Router } from "express";
+
+import { Router } from "express";
 import {
   checkUserTokens,
   createUser,
@@ -20,6 +21,7 @@ import {
   authenticateToken,
 } from "../middlewares/authHelpers";
 import {
+  cookieOptions,
   generateAccessToken,
   generateRefreshToken,
   getDataFromCookie,
@@ -42,11 +44,7 @@ import { idSchema } from "../validators/globalValidation";
 
 export const userRouter = Router();
 
-const cookieOptions: CookieOptions = {
-  httpOnly: true,
-  secure: process.env.PRODUCTION === "production",
-  sameSite: process.env.PRODUCTION === "production" ? "none" : "lax",
-};
+
 
 userRouter.get(
   "/all",

@@ -134,7 +134,7 @@ export const guestBookings = async (id: string, field = 'startDate', direction: 
   const cabinsInfo = await Promise.all(
     bookings.map(async (booking) => {
       const cabin = await cabinModel.findById(booking?.cabinID);
-      return { id: cabin._id, name: cabin.name, img: cabin.imgsUrl.at(0) }
+      return { id: cabin?._id, name: cabin?.name, img: cabin?.imgsUrl.at(0) }
     })
   )
   const updatedBookings = bookings.map((booking, i) => {

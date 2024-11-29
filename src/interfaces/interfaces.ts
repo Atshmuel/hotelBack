@@ -9,6 +9,7 @@ export interface Cabins extends Document {
   discount: number;
   description: string;
   imgsUrl: string[];
+  productId: string;
   lastUpdate?: Date;
 }
 export interface CabinUpdateData {
@@ -53,7 +54,8 @@ export interface Bookings extends Document {
   cabinID: Schema.Types.ObjectId;
   guestID: Schema.Types.ObjectId;
   cabinImg?: string,
-  cabinName?: string
+  cabinName?: string,
+  sId?:string,
 }
 export interface BookingUpdate {
   startDate?: Date;
@@ -105,5 +107,6 @@ export interface newCabinInt extends Document {
   regularPrice: number;
   discount: number;
   description: string;
+  productId: string
   imgsUrl: string[];
 }

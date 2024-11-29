@@ -70,7 +70,7 @@ cabinRouter.delete(
 cabinRouter.post(
   "/",
   authRole([config.ROLE.OWNER, config.ROLE.ADMIN]),
-  limiter(60, 1),
+  limiter(60, 99, config.ROLE.OWNER),
   async (req, res) => {
     const { error } = newCabinValidator.validate(req.body);
     const newCabin = req.body as newCabinInt;
@@ -102,17 +102,12 @@ cabinRouter.patch(
     }
     const newData = req.body as Cabins;
     try {
-      const { hasUpdated, message: updateMessage } = (await editCabinData(
-        id,
-        newData
-      )) as {
-        hasUpdated: boolean;
-        message: string;
-      };
-
-      res.status(200).json({ message: `${updateMessage}` });
+      const { hasUpdated, message } = (await editCabinData(id, newData))
+      if (!hasUpdated) throw new Error(message)
+      res.status(200).json({ message });
     } catch (error) {
       res.status(400).json({ error: error?.message });
     }
   }
 );
+

@@ -7,6 +7,8 @@ import { CustomRequest } from "../interfaces/interfaces";
 import { writeToFile } from "../services/fs";
 import { getUserInfo } from "../middlewares/authHelpers";
 import { deleteBooking, guestBookings } from "../db/controllers/bookingController";
+import { cookieOptions, createPaymentSession } from "../services/helpers";
+import { getCabin } from "../db/controllers/cabinController";
 export const guestRouter = Router();
 
 guestRouter.get("/", getUserInfo, async (req: CustomRequest, res) => {
@@ -75,3 +77,16 @@ guestRouter.patch('/:id', async (req, res) => {
   const updated = await updateGuest(nationalId, nationality, flag, id)
   return updated ? res.sendStatus(200) : res.sendStatus(304)
 })
+
+guestRouter.post("/checkout", async (req, res) => {
+  const cabinId: string = req.body.id
+  const quantity: number = req.body.quantity
+  try {
+    const cabinData = await getCabin(cabinId)
+    if (!cabinData) throw new Error('Could not find this cabin.')
+    const session = await createPaymentSession(cabinData, quantity)
+    res.status(302).json({sId:session.id,redirectTo:session.url})
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || "An unexpected error occurred" });
+  }
+}) 

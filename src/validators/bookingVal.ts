@@ -1,4 +1,4 @@
-import Joi from "joi";
+import Joi, { optional } from "joi";
 import { cabinIdSchema } from "./cabinVal";
 import { guestIdSchema } from "./guestVal";
 
@@ -21,6 +21,7 @@ export const newBookingValidator = Joi.object({
   status: Joi.string().required(),
   cabinID: Joi.string().length(24).required() || cabinIdSchema.required(),
   guestID: Joi.string().length(24).required() || guestIdSchema.required(),
+  sId: Joi.string().optional()
 });
 export const bookingUpdateValidator = Joi.object({
   extrasPrice: Joi.number().positive().optional(),

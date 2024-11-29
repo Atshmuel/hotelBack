@@ -8,6 +8,7 @@ export const cabinSchema = new mongoose.Schema<Cabins>({
   regularPrice: Number,
   discount: Number,
   description: String,
+  productId: String,
   imgsUrl: [String],
   lastUpdate: Date,
 });

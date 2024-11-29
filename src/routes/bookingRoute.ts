@@ -16,7 +16,7 @@ import {
 import { ObjectId } from "mongoose";
 import { authRole, getUserInfo } from "../middlewares/authHelpers";
 import { config } from "../config/config";
-import { limiter } from "../services/helpers";
+import { checkPayment, limiter } from "../services/helpers";
 import { idSchema } from "../validators/globalValidation";
 import { writeToFile } from "../services/fs";
 import { BookingUpdate, CustomRequest } from "../interfaces/interfaces";
@@ -26,16 +26,23 @@ bookingRouter.post(
   "/new",
   limiter(60, 999999),
   async (req, res) => {
-    const data = req.body;
+    const data = req.body;    
     const { error } = newBookingValidator.validate(data);
+  
     try {
+      const paid = await checkPayment(data?.sId)
+      if(!paid) {
+        throw new Error("Somthing went wrong with your payment, please contact our support team.")
+      }
+      //need to send email
+
       if (error) return res.status(400).json({ error: error.details[0].message });
-      const { hasCreated, message } = await createNewBooking({ ...data, createdAt: new Date() });
+      const { hasCreated, message } = await createNewBooking({ ...data,isPaid: paid, createdAt: new Date() });
 
       if (!hasCreated) {
         throw new Error(message);
       }
-      return res.status(201).json({ message, redirect: '/cabins/thankyou' })
+      return res.status(201).json({ message,status:true })
     } catch (error: any) {
       return res.status(400).json({ error: error?.message });
     }
