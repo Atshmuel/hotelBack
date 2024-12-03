@@ -18,6 +18,7 @@ const app = express();
 app.use(
   cors({
     origin: [
+      "https://wildshotel.vercel.app",
       "https://management-wildhotel.onrender.com",
       "http://localhost:5173",
       "http://localhost:3000",
