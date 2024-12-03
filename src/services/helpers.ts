@@ -146,8 +146,8 @@ export async function createPaymentSession(cabinData: Cabins, quantity: number) 
           quantity
         }
       ],
-      success_url: "http://localhost:3000/cabins/thankyou",
-      cancel_url: "http://localhost:3000/cabins/cancel"
+      success_url: "https://wildshotel.vercel.app/cabins/thankyou",
+      cancel_url: "https://wildshotel.vercel.app/cabins/cancel"
     })
     return session
   } catch (error) {
