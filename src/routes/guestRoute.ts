@@ -85,9 +85,8 @@ guestRouter.post("/checkout", async (req, res) => {
     const cabinData = await getCabin(cabinId)
     if (!cabinData) throw new Error('Could not find this cabin.')
     const session = await createPaymentSession(cabinData, quantity)
-    console.log(session);
-
-    res.status(302).json({ session })
+  
+    res.status(200).json(session)
   } catch (error: any) {
     console.log(error);
     res.status(500).json({ error: error.message || "An unexpected error occurred" });
